@@ -1,0 +1,27 @@
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo-section">
+            <div class="brand-title">
+                <img src="/assets/CinepolisLogo.png" class="brand-logo" alt="Cinepolis">
+            </div>
+            <p class="brand-subtitle">Gestión de Control de Salas</p>
+        </div>
+        <h2>Iniciar sesión</h2>
+        <p class="instruction">Ingresa tu ID y contraseña</p>
+
+        <form (ngSubmit)="onLogin()">
+            <div class="input-group">
+                <input type="text" placeholder="Usuario" name="num_empleado" [(ngModel)]="credenciales.num_empleado"
+                    autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="password" placeholder="Contraseña" name="password" [(ngModel)]="credenciales.password">
+            </div>
+            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            <button type="submit" class="btn-login">Iniciar sesión</button>
+            <button type="button" class="btn-register">Registrarme</button>
+        </form>
+        
+    </div>
+    <footer class="login-footer">©2026 Cinepolis Todos los derechos reservados</footer>
+</div>

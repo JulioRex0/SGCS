@@ -1,0 +1,19 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	background: linear-gradient(rgba(10, 24, 62, 0.45), rgba(10, 24, 62, 0.45)), url('/assets/CinepolisFondo.jpg') no-repeat center center fixed;
+	background-size: cover;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Ensure app root fills viewport so background is visible behind components */
+app-root, body > app-root, .app-root {
+	min-height: 100vh;
+}
