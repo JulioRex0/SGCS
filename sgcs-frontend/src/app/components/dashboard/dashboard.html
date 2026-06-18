@@ -1,0 +1,112 @@
+<div class="dashboard-wrapper">
+    <header class="dashboard-navbar">
+
+        <div class="navbar-left">
+            <button class="nav-icon-btn toggle-sidebar-btn" (click)="toggleMenu()" title="Alternar Menú">
+                ☰
+            </button>
+            <div class="brand-area">
+                <span class="cinema-logo"></span>
+                <h1>SISTEMA DE GESTIÓN DE CONTROL DE SALAS</h1>
+            </div>
+        </div>
+
+        <div class="navbar-right-container">
+
+            <button class="nav-icon-btn notifications-btn" title="Notificaciones">
+                <span class="notification-dot"></span>
+            </button>
+
+            <div class="user-profile-badge" (click)="verDatosUsuario()">
+                <div class="user-info">
+                    <span class="user-name">Julio Gomez Aguilar</span>
+                    <span class="user-id">276135</span>
+                </div>
+                <div class="user-avatar"></div>
+            </div>
+
+        </div>
+    </header>
+
+
+    <div class="dashboard-layout" [class.menu-hidden]="menuColapsado">
+
+        <aside class="sidebar-menu" [class.collapsed]="menuColapsado">
+            <div class="sidebar-content-wrapper">
+                <div class="sidebar-title">SALAS DEL CONJUNTO</div>
+                <nav class="rooms-nav">
+                    @for (salaNum of [1,2,3,4,5,6,7,8]; track salaNum) {
+                    <button class="sala-menu-btn" [class.active]="salaSeleccionada === salaNum"
+                        (click)="seleccionarSala(salaNum)">
+                        <span class="sala-name">Sala {{ salaNum }}</span>
+                        <div class="sala-mini-status">
+                            <span class="mini-ico green"></span>
+                            <span class="mini-ico yellow"></span>
+                        </div>
+                    </button>
+                    }
+                </nav>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="logout-style-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-content">
+
+            <div class="section-title-container">
+                <h2>Datos generales de las salas del conjunto</h2>
+            </div>
+
+            <section class="analytics-section">
+                <div class="chart-box">
+                    <h3>Salas con más incidencias</h3>
+                    <div class="mock-chart-bars">
+                        <div class="bar-trend-image"> (Gráfica de Incidencias)</div>
+                    </div>
+                </div>
+
+                <div class="chart-box">
+                    <h3>Activos en mantenimiento</h3>
+                    <div class="mock-chart-pie">
+                        <div class="pie-image"> (Gráfica de Pastel)</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="table-section">
+                <h3>Tabla con últimas actividades registradas en el sistema</h3>
+                <div class="table-responsive">
+                    <table class="neo-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Fecha y hora</th>
+                                <th>Actividades</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Javier Nava Duran</td>
+                                <td>27/05/2026, 18:45</td>
+                                <td>Descanzabrazos: (Sala 1) J-11, H-1, A5</td>
+                            </tr>
+                            <tr>
+                                <td>Uriel Moguel Rosas</td>
+                                <td>27/05/2026, 18:10</td>
+                                <td>Escalon: (Sala 1) Fila I, L, C</td>
+                            </tr>
+                            <tr>
+                                <td>Jorge Ortiz</td>
+                                <td>26/05/2026, 10:05</td>
+                                <td>Mantenimiento butaca: (Sala 8) K-12, F-4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>

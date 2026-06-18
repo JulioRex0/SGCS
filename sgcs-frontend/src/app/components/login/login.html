@@ -11,8 +11,8 @@
 
         <form (ngSubmit)="onLogin()">
             <div class="input-group">
-                <input type="text" placeholder="Usuario" name="num_empleado" [(ngModel)]="credenciales.num_empleado"
-                    autocomplete="off">
+                <input type="text" name="num_empleado" [(ngModel)]="credenciales.num_empleado"
+                    placeholder="Número de empleado" class="tu-clase-input">
             </div>
             <div class="input-group">
                 <input type="password" placeholder="Contraseña" name="password" [(ngModel)]="credenciales.password">
@@ -21,7 +21,7 @@
             <button type="submit" class="btn-login">Iniciar sesión</button>
             <button type="button" class="btn-register">Registrarme</button>
         </form>
-        
+
     </div>
     <footer class="login-footer">©2026 Cinepolis Todos los derechos reservados</footer>
 </div>

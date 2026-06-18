@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule} from '@angular/router';
 import { AuthService, CredencialesLogin, RespuestaLogin } from '../../services/auth';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -15,7 +16,10 @@ export class LoginComponent {
     password: ''
   };
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService,
+    private router: Router
+
+  ) { }
 
   onLogin() {
     if (!this.credenciales.num_empleado || !this.credenciales.password) {
@@ -28,9 +32,11 @@ export class LoginComponent {
       next: (respuesta: RespuestaLogin) => {
         console.log('¡Backend respondió con éxito!', respuesta);
         alert(`¡Bienvenido de nuevo, ${respuesta.usuario.nombre}!`);
-
         localStorage.setItem('token', respuesta.token);
         localStorage.setItem('usuario', JSON.stringify(respuesta.usuario));
+        // redirigir:
+        this.router.navigate(['/dashboard']);
+
       },
       error: (err: { error?: { error?: string } }) => {
         console.error('Error en el inicio de sesión:', err);
