@@ -1,0 +1,45 @@
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-card">
+            
+            <div class="logo-section">
+                <div class="brand-title">
+                    <img src="/assets/CinepolisLogo.png" class="brand-logo" alt="Cinepolis">
+                </div>
+                <p class="brand-subtitle">Gestión de Control de Salas</p>
+            </div>
+
+            <h2>Crear Cuenta</h2>
+            <p class="instruction">Registra un nuevo empleado en el sistema</p>
+
+            <form (ngSubmit)="onRegistro()" #registroForm="ngForm">
+                <div class="input-group">
+                    <input type="text" name="num_empleado" [(ngModel)]="nuevoUsuario.num_empleado"
+                        placeholder="Número de empleado" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" name="nombre" [(ngModel)]="nuevoUsuario.nombre" 
+                        placeholder="Nombre completo" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" name="password" [(ngModel)]="nuevoUsuario.password" 
+                        placeholder="Contraseña" required>
+                </div>
+
+                <button type="submit" class="login-style-btn" [disabled]="!registroForm.form.valid">
+                    Registrar Empleado
+                </button>
+
+                <div class="register-container-link">
+                    <button type="button" class="register-style-btn" routerLink="/login">
+                        Volver al Inicio de Sesión
+                    </button>
+                </div>
+            </form>
+            
+            <footer class="login-footer">©2026 Cinepolis Todos los derechos reservados</footer>
+        </div>
+    </div>
+</div>

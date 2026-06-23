@@ -1,11 +1,17 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login';
+import { RegistroComponent } from './components/registro/registro';
 import { DashboardComponent } from './components/dashboard/dashboard';
+import { PerfilComponent } from './components/perfil/perfil';
+import { authGuard } from './guards/auth-guard';
+import { UsuariosComponent } from './components/usuarios/usuarios';
 
 export const routes: Routes = [
-    // 🔄 Cambia temporalmente la ruta vacía para que apunte directo al Dashboard
-    { path: '', component: DashboardComponent },
     { path: 'login', component: LoginComponent },
-    { path: 'dashboard', component: DashboardComponent },
-    { path: '**', redirectTo: '' }
+    { path: 'registro', component: RegistroComponent },
+    { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+    { path: 'perfil', component: PerfilComponent, canActivate: [authGuard] },
+    { path: 'usuarios', component: UsuariosComponent, canActivate: [authGuard] },
+    { path: '', redirectTo: '/login', pathMatch: 'full' },
+    { path: '**', redirectTo: '/login' } 
 ];

@@ -1,0 +1,136 @@
+/* Centrado en pantalla y fondo oscuro con branding */
+.perfil-page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    font-family: 'Arial Black', Impact, sans-serif;
+    color: #0B2F61;
+    /* Texto principal en azul oscuro */
+}
+
+/* Tarjeta Limpia (Sin la sombra desfasada del neobrutalismo) */
+.perfil-card {
+    background: #ffffff;
+    border: 4px solid #0B2F61;
+    /* Mantenemos el borde grueso azul */
+    box-shadow: none;
+    /* 🚀 CORRECCIÓN: Eliminamos la sombra de la caja */
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.perfil-title {
+    font-size: 28px;
+    text-transform: uppercase;
+    margin: 0 0 10px 0;
+    letter-spacing: -1px;
+    color: #0B2F61;
+}
+
+.perfil-divider {
+    border: none;
+    border-top: 4px solid #0B2F61;
+    margin-bottom: 25px;
+}
+
+/* Estilos de los contenedores de los inputs */
+.form-group,
+.form-group-readonly {
+    margin-bottom: 20px;
+}
+
+.field-label {
+    display: block;
+    text-transform: uppercase;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #0B2F61;
+}
+
+/* Cajas de solo lectura con un tinte azul muy suave */
+.readonly-box {
+    background: #f0f4f8;
+    border: 3px solid #0B2F61;
+    padding: 12px 15px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1e3a5f;
+}
+
+.text-capitalize {
+    text-transform: capitalize;
+}
+
+/* Input editable sin la sombra dura abajo */
+.neobrutalism-input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 3px solid #0B2F61;
+    outline: none;
+    background: #ffffff;
+    box-sizing: border-box;
+    color: #0B2F61;
+    box-shadow: none;
+    /* Quitamos la sombra dura del input también */
+}
+
+.neobrutalism-input:focus {
+    background: #fdf8e2;
+}
+
+/* Contenedor de botones a dos columnas */
+.perfil-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* 🚀 NUEVO ESTILO DE BOTONES PREMIUM (Estilizados, planos y modernos) */
+.btn-neo {
+    padding: 14px;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 3px solid #0B2F61;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: none;
+    /* Quitamos la sombra neobrutalista */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Botón Guardar Cambios - Sólido Azul con efecto Hover */
+.btn-save {
+    background: #0B2F61;
+    color: #ffffff;
+}
+
+.btn-save:hover {
+    background: #ffffff;
+    color: #0B2F61;
+    /* Invierte colores al pasar el mouse */
+}
+
+/* Botón Volver al Dashboard - Estilo Esqueleto Dorado */
+.btn-back {
+    background: #ffffff;
+    color: #0B2F61;
+}
+
+.btn-back:hover {
+    background: #0B2F61;
+    color: #ffffff;
+    border-color: #0B2F61;
+    /* Cambia a borde dorado al pasar el mouse */
+}

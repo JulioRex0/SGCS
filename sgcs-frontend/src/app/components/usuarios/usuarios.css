@@ -1,0 +1,128 @@
+
+.usuarios-page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    font-family: 'Arial Black', Impact, sans-serif;
+    color: #0B2F61;
+}
+
+.usuarios-card {
+    background: #ffffff;
+    border: 4px solid #0B2F61;
+    padding: 40px;
+    width: 100%;
+    max-width: 650px;
+    box-sizing: border-box;
+}
+
+.usuarios-title {
+    font-size: 26px;
+    text-transform: uppercase;
+    margin: 0 0 5px 0;
+    letter-spacing: -1px;
+}
+
+.usuarios-subtitle {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #556b85;
+    margin: 0 0 20px 0;
+}
+
+.usuarios-divider {
+    border: none;
+    border-top: 4px solid #0B2F61;
+    margin-bottom: 25px;
+}
+
+
+.table-container {
+    overflow-x: auto;
+    border: 3px solid #0B2F61;
+    background: #ffffff;
+}
+
+.usuarios-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    text-align: left;
+}
+
+.usuarios-table th {
+    background: #0B2F61;
+    color: #ffffff;
+    font-family: 'Arial Black', sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    padding: 12px 15px;
+    letter-spacing: 0.5px;
+}
+
+
+.usuarios-table td {
+    padding: 12px 15px;
+    border-bottom: 2px solid #f0f4f8;
+    color: #0B2F61 !important;
+    font-size: 15px;
+}
+
+.usuarios-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.user-id-cell {
+    font-weight: bold;
+    color: #0B2F61 !important;
+}
+
+.user-name-cell {
+    font-weight: 500;
+    color: #0B2F61 !important;
+}
+
+
+.role-select {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #0B2F61;
+    background: #f0f4f8;
+    border: 2px solid #0B2F61;
+    outline: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: 'Arial Black', sans-serif;
+    transition: background 0.2s;
+}
+
+.role-select:focus {
+    background: #e2ecf7;
+}
+
+.usuarios-actions {
+    margin-top: 30px;
+}
+
+.btn-back {
+    padding: 14px 28px;
+    font-size: 13px;
+    font-weight: bold;
+    font-family: 'Arial Black', sans-serif;
+    text-transform: uppercase;
+    border: 3px solid #0B2F61;
+    background: #ffffff;
+    color: #0B2F61;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-back:hover {
+    background: #0B2F61 !important;
+    color: #ffffff !important;
+    border-color: #0B2F61 !important;
+}

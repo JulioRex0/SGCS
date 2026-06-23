@@ -17,12 +17,14 @@
                 <span class="notification-dot"></span>
             </button>
 
-            <div class="user-profile-badge" (click)="verDatosUsuario()">
+            <div class="user-profile-badge" routerLink="/perfil" style="cursor: pointer;" *ngIf="usuarioActivo">
                 <div class="user-info">
-                    <span class="user-name">Julio Gomez Aguilar</span>
-                    <span class="user-id">276135</span>
+                    <span class="user-name">{{ usuarioActivo.nombre }} ({{ usuarioActivo.rol }})</span>
+                    <span class="user-id">ID: {{ usuarioActivo.num_empleado }}</span>
                 </div>
-                <div class="user-avatar"></div>
+                <div class="user-avatar">
+                    {{ usuarioActivo.nombre.charAt(0).toUpperCase() }}
+                </div>
             </div>
 
         </div>
@@ -49,8 +51,16 @@
             </div>
 
             <div class="sidebar-footer">
+
+                <button *ngIf="usuarioActivo?.rol === 'supervisor'" routerLink="/usuarios"
+                    class="btn-sidebar btn-usuarios"
+                    style="margin-bottom: 10px; padding: 12px; width: 100%; border: 3px solid #0B2F61; background: #ffffff; color: #0B2F61; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+                    Administrar Usuarios
+                </button>
                 <button class="logout-style-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+                
             </div>
+
         </aside>
 
         <main class="dashboard-content">

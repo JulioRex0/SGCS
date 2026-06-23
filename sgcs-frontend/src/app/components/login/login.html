@@ -9,19 +9,27 @@
         <h2>Iniciar sesión</h2>
         <p class="instruction">Ingresa tu ID y contraseña</p>
 
-        <form (ngSubmit)="onLogin()">
+        <form (ngSubmit)="onLogin()" #loginForm="ngForm">
             <div class="input-group">
                 <input type="text" name="num_empleado" [(ngModel)]="credenciales.num_empleado"
-                    placeholder="Número de empleado" class="tu-clase-input">
+                    placeholder="Número de empleado" class="tu-clase-input" required>
             </div>
             <div class="input-group">
-                <input type="password" placeholder="Contraseña" name="password" [(ngModel)]="credenciales.password">
+                <input type="password" placeholder="Contraseña" name="password" [(ngModel)]="credenciales.password" required>
             </div>
             <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-            <button type="submit" class="btn-login">Iniciar sesión</button>
-            <button type="button" class="btn-register">Registrarme</button>
-        </form>
+            
+            <button type="submit" class="login-style-btn" [disabled]="!loginForm.form.valid">
+                Iniciar Sesión
+            </button>
 
+            <div class="register-container-link">
+                <button type="button" class="register-style-btn" routerLink="/registro">
+                    Registrarme
+                </button>
+            </div>
+        </form>
+        
+        <footer class="login-footer">©2026 Cinepolis Todos los derechos reservados</footer>
     </div>
-    <footer class="login-footer">©2026 Cinepolis Todos los derechos reservados</footer>
 </div>

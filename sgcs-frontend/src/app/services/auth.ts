@@ -20,8 +20,7 @@ export interface RespuestaLogin {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:3000/api';
-
+private apiUrl = 'http://192.168.0.12:3000/api';
   constructor(private http: HttpClient) {}
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {

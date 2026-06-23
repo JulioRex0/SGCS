@@ -84,6 +84,64 @@ body>app-root,
 	/* Limpieza absoluta de márgenes fijos */
 }
 
+/* Contenedor para darle espacio al botón de abajo */
+.register-container-link {
+    margin-top: 1.25rem;
+    width: 100%;
+}
+
+/* 1. Botón de Iniciar Sesión */
+.login-style-btn {
+    width: 100%;
+    background-color: #0b2354;
+    color: #ffffff;
+    border: 2px solid #1f2937;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #000000;
+    transition: all 0.1s;
+    box-sizing: border-box;
+    display: block;
+}
+
+/* Estilo DESHABILITADO */
+.login-style-btn:disabled {
+    background-color: #94a3b8 !important; 
+    color: #f1f5f9 !important; 
+    border: 2px solid #1f2937 !important; 
+    box-shadow: 4px 4px 0px #1f2937 !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+/*botón de Registrarme*/
+.register-style-btn {
+    width: 100%;
+    background-color: #ffffff;
+    color: #1f2937;
+    border: 2px solid #1f2937;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #1f2937;
+    transition: all 0.1s;
+    box-sizing: border-box;
+}
+
+/* Efecto Click y Hover */
+.register-style-btn:hover {
+    background-color: #f1f5f9;
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0px #1f2937;
+}
+
+.register-style-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px #1f2937;
+}
+
 .nav-icon-btn:active {
 	transform: translate(1px, 1px);
 	box-shadow: 1px 1px 0px #000;

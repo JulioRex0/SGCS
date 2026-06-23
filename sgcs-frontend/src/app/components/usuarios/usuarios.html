@@ -1,0 +1,52 @@
+<div class="usuarios-page-wrapper">
+    <div class="usuarios-card">
+        <h2 class="usuarios-title">Control de Usuarios</h2>
+        <p class="usuarios-subtitle">Panel de Supervisor: Modifica los privilegios del personal operativo.</p>
+
+        <hr class="usuarios-divider" />
+
+        <div class="table-container" *ngIf="usuarios && usuarios.length > 0">
+            <table class="usuarios-table">
+                <thead>
+                    <tr>
+                        <th>ID / Emp</th>
+                        <th>Nombre Completo</th>
+                        <th>Rol Asignado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let u of usuarios">
+                        <td class="user-id-cell">{{ u.num_empleado }}</td>
+                        <td class="user-name-cell">
+                            {{ u.nombre }}
+                            <span *ngIf="u.num_empleado === usuarioLogueado?.num_empleado"
+                                style="font-size: 12px; color: #556b85; font-family: Arial, sans-serif; font-weight: normal; margin-left: 6px; font-style: italic;">
+                                (Tú)
+                            </span>
+                        </td>
+                        <td>
+                            <select [ngModel]="u.rol" [disabled]="u.num_empleado === usuarioLogueado?.num_empleado"
+                                (ngModelChange)="cambiarRol(u.num_empleado, $event)" class="role-select"
+                                [style.opacity]="u.num_empleado === usuarioLogueado?.num_empleado ? '0.5' : '1'"
+                                [style.cursor]="u.num_empleado === usuarioLogueado?.num_empleado ? 'not-allowed' : 'pointer'">
+                                <option value="supervisor">Supervisor</option>
+                                <option value="operativo">Operativo</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div *ngIf="!usuarios || usuarios.length === 0"
+            style="text-align: center; padding: 20px; color: #0B2F61; font-family: Arial, sans-serif;">
+            <p>Cargando personal de Cinépolis...</p>
+        </div>
+
+        <div class="usuarios-actions">
+            <button routerLink="/dashboard" class="btn-back">
+                Volver al Dashboard
+            </button>
+        </div>
+    </div>
+</div>

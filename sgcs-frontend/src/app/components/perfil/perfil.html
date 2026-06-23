@@ -1,0 +1,35 @@
+<div class="perfil-page-wrapper">
+    <div class="perfil-card">
+        <h2 class="perfil-title">Perfil</h2>
+        <hr class="perfil-divider" />
+
+        <div class="form-group-readonly">
+            <label class="field-label">Número de Empleado</label>
+            <div class="readonly-box">
+                <span class="icon"></span> {{ usuarioActivo?.num_empleado }}
+            </div>
+        </div>
+
+        <div class="form-group-readonly">
+            <label class="field-label">Rol</label>
+            <div class="readonly-box text-capitalize">
+                <span class="icon"></span> {{ usuarioActivo?.rol }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="field-label" for="nombreInput">Nombre Completo (Editable)</label>
+            <input id="nombreInput" type="text" [(ngModel)]="nuevoNombre" class="neobrutalism-input"
+                placeholder="Tu nombre" />
+        </div>
+
+        <div class="perfil-actions">
+            <button (click)="guardarCambios()" class="btn-neo btn-save">
+                Guardar Cambios
+            </button>
+            <button routerLink="/dashboard" class="btn-neo btn-back">
+                Volver al Dashboard
+            </button>
+        </div>
+    </div>
+</div>

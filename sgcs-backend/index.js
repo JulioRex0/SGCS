@@ -39,7 +39,7 @@ app.post('/api/login', async (req, res) => {
 
         const usuario = usuarioQuery.rows[0];
 
-        console.log("Datos del usuario de la Base de Datos:", usuario); 
+        console.log("Datos del usuario de la Base de Datos:", usuario);
 
         const passwordCorrecto = await bcrypt.compare(password, usuario.password_hash);
 
@@ -58,6 +58,7 @@ app.post('/api/login', async (req, res) => {
             mensaje: '¡Inicio de sesión exitoso!',
             token,
             usuario: {
+                num_empleado: usuario.num_empleado,
                 nombre: usuario.nombre,
                 rol: usuario.rol
             }
@@ -70,7 +71,120 @@ app.post('/api/login', async (req, res) => {
 });
 //Fin del POST inicio de sesión
 
+// POST Registro de nuevos empleados
+app.post('/api/registro', async (req, res) => {
+    const { num_empleado, nombre, password } = req.body;
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    if (!num_empleado || !nombre || !password) {
+        return res.status(400).json({ error: 'Por favor, rellena todos los campos obligatorios.' });
+    }
+
+    try {
+        // Verificar si el número de empleado ya existe
+        const existeQuery = await pool.query(
+            'SELECT id_usuario FROM usuarios WHERE num_empleado = $1',
+            [num_empleado]
+        );
+
+        if (existeQuery.rows.length > 0) {
+            return res.status(400).json({ error: 'Este número de empleado ya está registrado.' });
+        }
+
+        // Encriptación de contraseña
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        const nuevoUsuario = await pool.query(
+            "INSERT INTO usuarios (num_empleado, nombre, password_hash, rol, activo) VALUES ($1, $2, $3, 'operativo', true) RETURNING id_usuario, nombre",
+            [num_empleado, nombre, passwordHash]
+        );
+
+        res.status(201).json({
+            mensaje: '¡Usuario registrado con éxito!',
+            usuario: nuevoUsuario.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error en el servidor durante el registro:', error);
+
+        res.status(500).json({ error: error.message || 'Hubo un error al registrar al usuario.' });
+    }
+});
+
+// PUT Actualizar únicamente el nombre del usuario logueado
+app.put('/api/usuarios/:num_empleado', async (req, res) => {
+    const { num_empleado } = req.params;
+    const { nombre } = req.body;
+
+    if (!nombre || nombre.trim() === '') {
+        return res.status(400).json({ error: 'El nombre es obligatorio.' });
+    }
+
+    try {
+        const resultado = await pool.query(
+            'UPDATE usuarios SET nombre = $1 WHERE num_empleado = $2 RETURNING num_empleado, nombre, rol',
+            [nombre, num_empleado]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        res.json({
+            mensaje: '¡Perfil actualizado correctamente!',
+            usuario: resultado.rows[0]
+        });
+    } catch (error) {
+        console.error('Error al actualizar usuario en la base de datos:', error);
+        res.status(500).json({ error: 'Hubo un error interno al guardar el nuevo nombre.' });
+    }
+});
+
+// GET - Obtener todos los usuarios de la base de datos (Ordenados por nombre)
+app.get('/api/usuarios', async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            'SELECT num_empleado, nombre, rol FROM usuarios ORDER BY nombre ASC'
+        );
+        
+        console.log(`[BD] Usuarios enviados al frontend: ${resultado.rows.length} registros.`);
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error('Error al obtener usuarios en la BD:', error);
+        res.status(500).json({ error: 'Error interno del servidor al consultar usuarios.' });
+    }
+});
+
+// PUT - Actualizar exclusivamente el ROL de un usuario específico
+app.put('/api/usuarios/:num_empleado/rol', async (req, res) => {
+    const { num_empleado } = req.params;
+    const { rol } = req.body;
+
+    // Validación de roles permitidos
+    if (!rol || !['supervisor', 'operativo'].includes(rol.toLowerCase())) {
+        return res.status(400).json({ error: 'El rol especificado no es válido.' });
+    }
+
+    try {
+        const resultado = await pool.query(
+            'UPDATE usuarios SET rol = $1 WHERE num_empleado = $2 RETURNING num_empleado, nombre, rol',
+            [rol.toLowerCase(), num_empleado]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'El empleado no existe.' });
+        }
+
+        res.json({
+            mensaje: '¡Rol actualizado de forma exitosa!',
+            usuario: resultado.rows[0]
+        });
+    } catch (error) {
+        console.error('Error al actualizar rol en la BD:', error);
+        res.status(500).json({ error: 'Error interno al actualizar el rol en la base de datos.' });
+    }
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en tu red local usando la IP de tu laptop`);
 });

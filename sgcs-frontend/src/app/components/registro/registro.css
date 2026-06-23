@@ -1,0 +1,173 @@
+/* Centrar el contenedor blanco neobrutalista sobre el fondo de la app */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.login-container {
+    background: #ffffff;
+    border: 3px solid #1f2937;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 8px 8px 0px #000000; /* Sombra sólida neobrutalista */
+    box-sizing: border-box;
+}
+
+/* Encabezado del logo corporativo */
+.logo-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.cinema-title {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #0b2354; /* Azul Cinépolis */
+    letter-spacing: -0.03em;
+}
+
+.system-badge {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+    color: #4b5563;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+/* Estilos de las cajas de Texto e Inputs */
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group input, 
+.input-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #1f2937;
+    background: #ffffff;
+    color: #1f2937;
+    box-shadow: 3px 3px 0px #1f2937;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.input-group input:focus, 
+.input-group select:focus {
+    background: #f8fafc;
+    box-shadow: 4px 4px 0px #0b2354;
+}
+
+/* Botones con sombras neobrutalistas sólidas */
+.login-style-btn {
+    width: 100%;
+    background-color: #0b2354;
+    color: #ffffff;
+    border: 2px solid #1f2937;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #000000;
+    margin-bottom: 1rem;
+    transition: all 0.1s;
+}
+
+.login-style-btn:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0px #000000;
+}
+
+.login-style-btn:disabled {
+    background-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.register-style-btn {
+    width: 100%;
+    background-color: #ffffff;
+    color: #1f2937;
+    border: 2px solid #1f2937;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #1f2937;
+    transition: all 0.1s;
+}
+
+.register-style-btn:hover {
+    background-color: #f1f5f9;
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0px #1f2937;
+}
+
+/* Centrado y espacio del área del logo */
+.logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* Control del tamaño de la imagen de Cinépolis */
+.brand-logo {
+    max-width: 220px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.brand-subtitle {
+    background-color: #0b2354; 
+    color: #ffffff !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3rem 1.2rem;
+    border-radius: 50px;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    letter-spacing: 0.02em;
+}
+
+/* Ajuste opcional para los textos guía */
+.instruction {
+    color: #4b5563;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.login-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2rem;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 1rem;
+}
