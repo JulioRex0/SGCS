@@ -1,8 +1,13 @@
 // index.js
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); 
 const pool = require('./db');
 require('dotenv').config();
+
+// Librerías para encriptación y tokens
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,13 +15,18 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.get('/', (req, res) => {
     res.send('Servidor del SGCS operando correctamente.');
 });
 
-// librerías para encriptación y tokens
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const rutasAsientos = require('./asientos'); 
+app.use('/api/asientos', rutasAsientos);
+
+app.listen(PORT, () => {
+    console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
+});
 
 // POST inicio de sesión
 app.post('/api/login', async (req, res) => {
@@ -185,6 +195,49 @@ app.put('/api/usuarios/:num_empleado/rol', async (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor corriendo en tu red local usando la IP de tu laptop`);
+// GET - Obtener la estructura y estados de una sala específica
+app.get('/api/salas/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // 1. Obtener los datos básicos de la sala
+        const salaQuery = await pool.query(
+            'SELECT id, numero, distribucion_filas FROM salas WHERE numero = $1', 
+            [id]
+        );
+
+        if (salaQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'La sala especificada no existe.' });
+        }
+
+        const sala = salaQuery.rows[0];
+
+        const asientosQuery = await pool.query(
+            'SELECT fila, numero, estado FROM asientos_status WHERE sala_id = $1 AND estado != \'limpio\'',
+            [sala.id]
+        );
+
+        const asientosMapa = {};
+        asientosQuery.rows.forEach(asiento => {
+            const llave = `${asiento.fila.trim()}-${asiento.numero}`;
+            asientosMapa[llave] = { estado: asiento.estado };
+        });
+
+        res.json({
+            sala: {
+                id: sala.id,
+                numero: sala.numero,
+                distribucion_filas: sala.distribucion_filas
+            },
+            asientos: asientosMapa
+        });
+
+    } catch (error) {
+        console.error('Error al obtener los detalles de la sala:', error);
+        res.status(500).json({ error: 'Error interno del servidor al consultar la sala.' });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor de Cinépolis corriendo localmente en http://localhost:${PORT}`);
 });
