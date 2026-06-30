@@ -1,0 +1,211 @@
+/* ==========================================================================
+   ESTILOS BASE GENERALES (ESCRITORIO / PC)
+   ========================================================================== */
+
+.salas-page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: auto;
+    padding: 15px;
+    font-family: 'Arial Black', Impact, sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.salas-card {
+    background: #ffffff;
+    border: 4px solid #0B2F61;
+    padding: 20px 30px 30px 30px;
+    width: 100%;
+    max-width: 1140px;
+    box-sizing: border-box;
+    margin: 0 auto;
+}
+
+.mapa-asientos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 30px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    width: 100%;
+    align-items: center;
+}
+
+.logo-text-desktop {
+    display: block;
+    font-size: 18px;
+    margin: 0;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.logo-text-mobile {
+    display: none;
+}
+
+
+/* ==========================================================================
+   FIX DE NAVBAR Y CONTENEDORES PARA MÓVILES (TABLETS Y CELULARES)
+   ========================================================================== */
+@media (max-width: 768px) {
+
+    .dashboard-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #0B2F61;
+        color: #ffffff;
+        padding: 10px 20px;
+        height: 60px;
+        box-sizing: border-box;
+    }
+
+    .navbar-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .brand-area {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .logo-text-desktop {
+        display: none !important;
+    }
+
+    .logo-text-mobile {
+        display: block !important;
+        font-size: 16px;
+        margin: 0;
+        color: #ffffff;
+        font-weight: bold;
+        letter-spacing: 1px;
+        white-space: nowrap; 
+    }
+
+    .nav-icon-btn {
+        padding: 4px !important;
+        margin: 0 !important;
+    }
+
+    .toggle-sidebar-btn,
+    .home-btn,
+    .notifications-btn {
+        font-size: 16px !important;
+    }
+
+    .home-btn svg,
+    .notifications-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .navbar-right-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .user-profile-badge {
+        display: flex;
+        align-items: center;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        gap: 0 !important;
+    }
+
+    .user-info {
+        display: none !important;
+    }
+
+    .user-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 13px !important;
+        margin: 0 !important;
+        border: 2px solid #ffffff;
+    }
+
+    .sidebar-menu {
+        position: fixed !important;
+        display: block !important; 
+        top: 60px; 
+        left: 0;
+        width: 260px; 
+        height: calc(100vh - 60px); 
+        background-color: #ffffff; 
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3); 
+        z-index: 9999 !important; 
+        transition: transform 0.3s ease-in-out;
+        overflow-y: auto; 
+    }
+
+    .sidebar-menu.collapsed,
+    .menu-hidden .sidebar-menu {
+        transform: translateX(-100%) !important;
+        box-shadow: none;
+    }
+
+    .sidebar-content-wrapper {
+        display: block !important;
+        height: auto !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .rooms-nav {
+        display: block !important;
+        height: auto !important;
+        width: 100% !important;
+        margin-bottom: 15px !important; 
+        padding: 0 10px !important; 
+        box-sizing: border-box;
+    }
+
+    .sala-menu-btn {
+        width: 100% !important;
+        display: flex !important; 
+        justify-content: space-between;
+        align-items: center;
+        box-sizing: border-box;
+        margin-bottom: 8px; 
+    }
+
+    .sidebar-footer {
+        display: block !important;
+        position: relative !important;
+        margin-top: 5px !important; 
+        padding: 0 10px 20px 10px !important; 
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .btn-usuarios,
+    .logout-style-btn {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .dashboard-layout {
+        position: relative;
+        display: block !important; 
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .dashboard-content {
+        padding: 8px !important;
+        width: 100% !important;
+        margin-left: 0 !important; 
+        box-sizing: border-box;
+    }
+}

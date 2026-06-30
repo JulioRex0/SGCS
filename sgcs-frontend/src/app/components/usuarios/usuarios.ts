@@ -37,7 +37,9 @@ export class UsuariosComponent implements OnInit {
   async cargarUsuarios() {
     try {
       const token = localStorage.getItem('token');
-      const url = `http://192.168.0.12:3000/api/usuarios?t=${new Date().getTime()}`;
+      
+      const currentHost = window.location.hostname;
+      const url = `http://${currentHost}:3000/api/usuarios?t=${new Date().getTime()}`;
 
       const respuesta = await fetch(url, {
         method: 'GET',
@@ -70,8 +72,10 @@ export class UsuariosComponent implements OnInit {
       return;
     }
 
-    try {
-      const respuesta = await fetch(`http://192.168.0.12:3000/api/usuarios/${num_empleado}/rol`, {
+  try {
+      const currentHost = window.location.hostname;
+
+      const respuesta = await fetch(`http://${currentHost}:3000/api/usuarios/${num_empleado}/rol`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

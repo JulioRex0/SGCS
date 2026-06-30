@@ -33,8 +33,9 @@ export class PerfilComponent implements OnInit {
     }
 
     try {
-      // Cambiar la IP mas adelante cuando se tenga el dominio o IP fija del backend
-      const respuesta = await fetch(`http://192.168.0.12:3000/api/usuarios/${this.usuarioActivo.num_empleado}`, {
+      const currentHost = window.location.hostname;
+
+      const respuesta = await fetch(`http://${currentHost}:3000/api/usuarios/${this.usuarioActivo.num_empleado}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

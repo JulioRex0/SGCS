@@ -1,4 +1,3 @@
-/* Centrar el contenedor blanco neobrutalista sobre el fondo de la app */
 .login-wrapper {
     display: flex;
     justify-content: center;
@@ -14,11 +13,10 @@
     padding: 2.5rem;
     width: 100%;
     max-width: 420px;
-    box-shadow: 8px 8px 0px #000000; /* Sombra sólida neobrutalista */
+    box-shadow: 8px 8px 0px #000000; 
     box-sizing: border-box;
 }
 
-/* Encabezado del logo corporativo */
 .logo-header {
     display: flex;
     flex-direction: column;
@@ -28,7 +26,7 @@
 .cinema-title {
     font-size: 2rem;
     font-weight: 900;
-    color: #0b2354; /* Azul Cinépolis */
+    color: #0b2354; 
     letter-spacing: -0.03em;
 }
 
@@ -53,7 +51,6 @@ h2 {
     margin-bottom: 2rem;
 }
 
-/* Estilos de las cajas de Texto e Inputs */
 .input-group {
     margin-bottom: 1.25rem;
 }
@@ -78,7 +75,6 @@ h2 {
     box-shadow: 4px 4px 0px #0b2354;
 }
 
-/* Botones con sombras neobrutalistas sólidas */
 .login-style-btn {
     width: 100%;
     background-color: #0b2354;
@@ -125,7 +121,6 @@ h2 {
     box-shadow: 5px 5px 0px #1f2937;
 }
 
-/* Centrado y espacio del área del logo */
 .logo-section {
     display: flex;
     flex-direction: column;
@@ -134,7 +129,6 @@ h2 {
     text-align: center;
 }
 
-/* Control del tamaño de la imagen de Cinépolis */
 .brand-logo {
     max-width: 220px;
     height: auto;
@@ -155,7 +149,6 @@ h2 {
     letter-spacing: 0.02em;
 }
 
-/* Ajuste opcional para los textos guía */
 .instruction {
     color: #4b5563;
     font-size: 0.9rem;

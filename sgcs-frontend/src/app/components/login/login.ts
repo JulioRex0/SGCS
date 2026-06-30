@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule} from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService, CredencialesLogin, RespuestaLogin } from '../../services/auth';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -16,9 +17,9 @@ export class LoginComponent {
     password: ''
   };
 
-  constructor(private authService: AuthService,
+  constructor(
+    private authService: AuthService,
     private router: Router
-
   ) { }
 
   onLogin() {
@@ -32,15 +33,17 @@ export class LoginComponent {
       next: (respuesta: RespuestaLogin) => {
         console.log('¡Backend respondió con éxito!', respuesta);
         alert(`¡Bienvenido de nuevo, ${respuesta.usuario.nombre}!`);
+        
         localStorage.setItem('token', respuesta.token);
         localStorage.setItem('usuario', JSON.stringify(respuesta.usuario));
-        // redirigir:
+        
         this.router.navigate(['/dashboard']);
-
       },
-      error: (err: { error?: { error?: string } }) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Error en el inicio de sesión:', err);
-        const mensajeError = err.error?.error || 'Error al conectar con el servidor';
+        
+        
+        const mensajeError = err.error?.error || 'Error al conectar con el servidor (Verifica tu red)';
         alert(mensajeError);
       }
     });

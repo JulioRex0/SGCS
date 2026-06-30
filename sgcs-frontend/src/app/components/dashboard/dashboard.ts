@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core'; 
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterOutlet, RouterModule } from '@angular/router';
 
 interface Sala {
   numero: number;
@@ -13,24 +13,32 @@ interface Sala {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RouterOutlet],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class DashboardComponent implements OnInit { 
-  salaSeleccionada: number = 1;
-  salas = []; 
-  menuColapsado: boolean = false;
-
+export class DashboardComponent implements OnInit {
+  salaSeleccionada: number | null = null;
+  salas: Sala[] = [];
+  menuColapsado: boolean = true;
   usuarioActivo: any = null;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   ngOnInit() {
     const datosUsuario = localStorage.getItem('usuario');
     if (datosUsuario) {
       this.usuarioActivo = JSON.parse(datosUsuario);
       console.log('Usuario activo en el Dashboard:', this.usuarioActivo);
+    }
+
+    if (this.router.url === '/dashboard') {
+      this.salaSeleccionada = null;
+      this.menuColapsado = true; 
+    } else if (this.router.url.includes('/dashboard/salas/')) {
+      const partes = this.router.url.split('/');
+      this.salaSeleccionada = parseInt(partes[partes.length - 1], 10);
+      this.menuColapsado = true; 
     }
   }
 
@@ -40,7 +48,15 @@ export class DashboardComponent implements OnInit {
 
   seleccionarSala(numero: number) {
     this.salaSeleccionada = numero;
-    console.log(`Cambiando a la vista detallada de la Sala ${numero}`);
+    this.menuColapsado = true; 
+    console.log(`Cambiando a la vista detallada de la Sala ${numero} y colapsando menú`);
+  }
+
+  irADatosGenerales() {
+    this.salaSeleccionada = null; 
+    this.menuColapsado = false; 
+    this.router.navigate(['/dashboard']); 
+    console.log('Regresando a los datos generales y expandiendo menú');
   }
 
   verDatosUsuario() {
@@ -49,7 +65,8 @@ export class DashboardComponent implements OnInit {
 
   cerrarSesion() {
     console.log("Cerrando sesión, destruyendo token y redirigiendo.");
-    localStorage.clear(); 
-    this.router.navigate(['/login']); 
+    localStorage.clear();
+    this.router.navigate(['/login']);
   }
 }
+

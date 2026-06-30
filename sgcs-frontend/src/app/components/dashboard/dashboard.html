@@ -1,20 +1,40 @@
 <div class="dashboard-wrapper">
-    <header class="dashboard-navbar">
 
-        <div class="navbar-left">
+    <header class="dashboard-navbar">
+        <div class="navbar-left" style="display: flex; align-items: center;">
+
             <button class="nav-icon-btn toggle-sidebar-btn" (click)="toggleMenu()" title="Alternar Menú">
                 ☰
             </button>
-            <div class="brand-area">
-                <span class="cinema-logo"></span>
-                <h1>SISTEMA DE GESTIÓN DE CONTROL DE SALAS</h1>
-            </div>
+
+            <button class="nav-icon-btn home-btn" (click)="irADatosGenerales()" title="Datos Generales del Conjunto"
+                style="margin-left: 12px; background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: #ffffff; width: auto; height: auto;">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-house-door-fill" viewBox="0 0 16 16"
+                    style="transition: transform 0.1s ease; display: block;">
+                    <path
+                        d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5" />
+                </svg>
+
+            </button>
+
         </div>
-
+        <div class="brand-area">
+            <span class="cinema-logo"></span>
+            <h1 class="logo-text-desktop">SISTEMA DE GESTIÓN DE CONTROL DE SALAS</h1>
+            <h1 class="logo-text-mobile">SGCS</h1>
+        </div>
         <div class="navbar-right-container">
-
-            <button class="nav-icon-btn notifications-btn" title="Notificaciones">
-                <span class="notification-dot"></span>
+            <button class="nav-icon-btn notifications-btn" title="Notificaciones"
+                style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; position: relative; color: #ffffff;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+                    class="bi bi-bell-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901" />
+                </svg>
+                <span class="notification-dot"
+                    style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background-color: #ef4444; border-radius: 50%;"></span>
             </button>
 
             <div class="user-profile-badge" routerLink="/perfil" style="cursor: pointer;" *ngIf="usuarioActivo">
@@ -26,20 +46,16 @@
                     {{ usuarioActivo.nombre.charAt(0).toUpperCase() }}
                 </div>
             </div>
-
         </div>
     </header>
 
-
     <div class="dashboard-layout" [class.menu-hidden]="menuColapsado">
-
         <aside class="sidebar-menu" [class.collapsed]="menuColapsado">
             <div class="sidebar-content-wrapper">
-                <div class="sidebar-title">SALAS DEL CONJUNTO</div>
                 <nav class="rooms-nav">
                     @for (salaNum of [1,2,3,4,5,6,7,8]; track salaNum) {
                     <button class="sala-menu-btn" [class.active]="salaSeleccionada === salaNum"
-                        (click)="seleccionarSala(salaNum)">
+                        [routerLink]="['/dashboard/salas', salaNum]" (click)="seleccionarSala(salaNum)">
                         <span class="sala-name">Sala {{ salaNum }}</span>
                         <div class="sala-mini-status">
                             <span class="mini-ico green"></span>
@@ -51,72 +67,73 @@
             </div>
 
             <div class="sidebar-footer">
-
                 <button *ngIf="usuarioActivo?.rol === 'supervisor'" routerLink="/usuarios"
                     class="btn-sidebar btn-usuarios"
                     style="margin-bottom: 10px; padding: 12px; width: 100%; border: 3px solid #0B2F61; background: #ffffff; color: #0B2F61; font-weight: bold; cursor: pointer; text-transform: uppercase;">
                     Administrar Usuarios
                 </button>
                 <button class="logout-style-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
-                
             </div>
-
         </aside>
 
         <main class="dashboard-content">
+            <div *ngIf="salaSeleccionada === null">
+                <div class="section-title-container">
+                    <h2>Datos generales de las salas del conjunto</h2>
+                </div>
 
-            <div class="section-title-container">
-                <h2>Datos generales de las salas del conjunto</h2>
+                <section class="analytics-section">
+                    <div class="chart-box">
+                        <h3>Salas con más incidencias</h3>
+                        <div class="mock-chart-bars">
+                            <div class="bar-trend-image"> (Gráfica de Incidencias)</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <h3>Activos en mantenimiento</h3>
+                        <div class="mock-chart-pie">
+                            <div class="pie-image"> (Gráfica de Pastel)</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="table-section">
+                    <h3>Tabla con últimas actividades registradas en el sistema</h3>
+                    <div class="table-responsive">
+                        <table class="neo-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Fecha y hora</th>
+                                    <th>Actividades</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Javier Nava Duran</td>
+                                    <td>27/05/2026, 18:45</td>
+                                    <td>Descanzabrazos: (Sala 1) J-11, H-1, A5</td>
+                                </tr>
+                                <tr>
+                                    <td>Uriel Moguel Rosas</td>
+                                    <td>27/05/2026, 18:10</td>
+                                    <td>Escalon: (Sala 1) Fila I, L, C</td>
+                                </tr>
+                                <tr>
+                                    <td>Jorge Ortiz</td>
+                                    <td>26/05/2026, 10:05</td>
+                                    <td>Mantenimiento butaca: (Sala 8) K-12, F-4</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
 
-            <section class="analytics-section">
-                <div class="chart-box">
-                    <h3>Salas con más incidencias</h3>
-                    <div class="mock-chart-bars">
-                        <div class="bar-trend-image"> (Gráfica de Incidencias)</div>
-                    </div>
-                </div>
-
-                <div class="chart-box">
-                    <h3>Activos en mantenimiento</h3>
-                    <div class="mock-chart-pie">
-                        <div class="pie-image"> (Gráfica de Pastel)</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="table-section">
-                <h3>Tabla con últimas actividades registradas en el sistema</h3>
-                <div class="table-responsive">
-                    <table class="neo-table">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Fecha y hora</th>
-                                <th>Actividades</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Javier Nava Duran</td>
-                                <td>27/05/2026, 18:45</td>
-                                <td>Descanzabrazos: (Sala 1) J-11, H-1, A5</td>
-                            </tr>
-                            <tr>
-                                <td>Uriel Moguel Rosas</td>
-                                <td>27/05/2026, 18:10</td>
-                                <td>Escalon: (Sala 1) Fila I, L, C</td>
-                            </tr>
-                            <tr>
-                                <td>Jorge Ortiz</td>
-                                <td>26/05/2026, 10:05</td>
-                                <td>Mantenimiento butaca: (Sala 8) K-12, F-4</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
+            <div *ngIf="salaSeleccionada !== null">
+                <router-outlet></router-outlet>
+            </div>
         </main>
     </div>
 </div>
