@@ -67,13 +67,13 @@
     overflow-x: auto;
     padding-bottom: 15px;
     width: 100%;
-    align-items: center; 
+    align-items: center;
 }
 
 .fila-asientos {
     display: flex;
     align-items: center;
-    justify-content: center; 
+    justify-content: center;
     gap: 15px;
     width: 100%;
 }
@@ -124,23 +124,30 @@
 
 .asiento.sucio {
     background: #ef4444 !important;
-    border-color: #ef4444;
-    color: #ffffff;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
 }
 
 .asiento.mantenimiento {
     background: #f59e0b !important;
-    border-color: #f59e0b;
-    color: #ffffff;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
 }
 
 .asiento.sucio-asiento,
 .asiento.sucio-portavaso,
 .asiento.sucio-descanzabrazo,
 .asiento.sucio-tachon {
-    background: #ffffff;
-    border: 2px solid #ef4444;
-    color: #ef4444;
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.asiento.mixto-mantenimiento-sucio {
+    background: linear-gradient(135deg, #f59e0b 50%, #ef4444 50%) !important;
+    border-color: #0B2F61 !important;
+    color: #ffffff !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 .asiento.discapacidad {
@@ -185,16 +192,36 @@
     background: #ffffff;
 }
 
-.muestra.limpio { background: #ffffff; }
-.muestra.sucio { background: #ef4444; border-color: #ef4444; }
-.muestra.mantenimiento { background: #f59e0b; border-color: #f59e0b; color: #ffffff; }
+.muestra.limpio {
+    background: #ffffff;
+}
+
+.muestra.sucio {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.muestra.mantenimiento {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff;
+}
+
 .muestra.sucio-asiento,
 .muestra.sucio-portavaso,
 .muestra.sucio-descanzabrazo,
 .muestra.sucio-tachon {
-    border: 2px solid #ef4444;
-    color: #ef4444;
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
 }
+
+.muestra.mixto-mantenimiento-sucio {
+    background: linear-gradient(135deg, #f59e0b 50%, #ef4444 50%) !important;
+    border-color: #0B2F61 !important;
+    color: #ffffff !important;
+}
+
 .muestra.discapacidad {
     border-color: #0B2F61;
     color: #0B2F61;
@@ -225,26 +252,28 @@
         overflow-x: auto;
         overflow-y: hidden;
         padding: 10px 0 20px 0;
-        display: block; 
-        text-align: center; 
+        display: block;
+        text-align: center;
         scrollbar-width: thin;
         scrollbar-color: #0B2F61 #f0f4f8;
     }
 
     .mapa-scroll-interno {
-        display: inline-flex; 
+        display: inline-flex;
         flex-direction: column;
         gap: 8px;
-        text-align: left; 
+        text-align: left;
         padding: 0 10px;
     }
-    
+
     .mapa-asientos-container::-webkit-scrollbar {
         height: 6px;
     }
+
     .mapa-asientos-container::-webkit-scrollbar-track {
         background: #f0f4f8;
     }
+
     .mapa-asientos-container::-webkit-scrollbar-thumb {
         background-color: #0B2F61;
         border-radius: 4px;
@@ -253,7 +282,7 @@
     .fila-asientos {
         display: flex;
         align-items: center;
-        justify-content: center; 
+        justify-content: center;
         gap: 10px;
         width: 100%;
     }
@@ -299,7 +328,6 @@
    CONTROL SUPREMO DEL MODAL FLOTANTE (PC Y MÓVIL)
    ========================================================================== */
 
-/* Rompe el flujo del mapa de salas y oscurece toda la pantalla visible */
 .modal-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -310,7 +338,7 @@
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    z-index: 999999 !important; 
+    z-index: 999999 !important;
     padding: 16px;
     box-sizing: border-box;
 }
@@ -319,7 +347,7 @@
     background: #ffffff !important;
     border: 4px solid #0B2F61 !important;
     width: 100% !important;
-    max-width: 480px !important; 
+    max-width: 480px !important;
     border-radius: 8px !important;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
     display: flex !important;
@@ -391,6 +419,35 @@
 .form-control:focus {
     border-color: #0B2F61 !important;
     outline: none !important;
+}
+
+.contenedor-checkboxes {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    background-color: #f7fafc !important;
+    padding: 14px !important;
+    border-radius: 6px !important;
+    border: 2px solid #e2e8f0 !important;
+    margin-top: 4px !important;
+}
+
+.checkbox-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    color: #2d3748 !important;
+    cursor: pointer !important;
+    font-weight: normal !important;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer !important;
+    accent-color: #0B2F61 !important;
 }
 
 .btn-camara-label {
@@ -470,6 +527,34 @@
 }
 
 @keyframes zoomInModal {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ==========================================================================
+   BOTÓN DE LIBERAR SALA (PC Y MÓVIL)
+   ========================================================================== */
+.btn-liberar-sala {
+    background-color: #22c55e !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    font-family: Arial, sans-serif !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+}
+
+.btn-liberar-sala:hover {
+    background-color: #16a34a !important;
 }

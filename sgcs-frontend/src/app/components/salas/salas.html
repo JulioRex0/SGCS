@@ -3,7 +3,13 @@
 
         <div class="sala-header-container">
             <h1 class="sala-titulo">Sala {{ infoSala?.numero || salaId }}</h1>
-            <span class="sala-tipo-badge">Tradicional</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="sala-tipo-badge">Tradicional</span>
+                <button *ngIf="rolUsuario === 'supervisor'" class="btn-liberar-sala"
+                    (click)="confirmarLiberacionSala()">
+                    Liberar Sala
+                </button>
+            </div>
         </div>
 
         <div class="pantalla-proyeccion">
@@ -11,7 +17,7 @@
         </div>
 
         <div class="mapa-asientos-container">
-            <div class="mapa-scroll-interno"> 
+            <div class="mapa-scroll-interno">
                 @for (fila of filas; track fila) {
                 <div class="fila-asientos">
                     <div class="fila-letra">{{ fila }}</div>
@@ -37,14 +43,17 @@
             <div class="leyenda-item"><span class="muestra sucio-descanzabrazo">S/D</span> Sucio Descansabrazos</div>
             <div class="leyenda-item"><span class="muestra sucio-tachon">S/T</span> Sucio Tachón</div>
             <div class="leyenda-item"><span class="muestra mantenimiento">M</span> Mantenimiento</div>
+            <div class="leyenda-item"><span class="muestra mixto-mantenimiento-sucio">M/S</span> Mantenimiento + Sucio
+            </div>
             <div class="leyenda-item"><span class="muestra discapacidad">♿</span> Discapacidad</div>
         </div>
 
     </div>
 
-<div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+    <!-- Modal de Reportes -->
+    <div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
         <div class="modal-container" (click)="$event.stopPropagation()">
-            
+
             <div class="modal-header">
                 <h3>Reportar Butaca {{ asientoSeleccionado?.fila }}-{{ asientoSeleccionado?.numero }}</h3>
                 <button class="btn-cerrar-x" (click)="cerrarModal()">×</button>
@@ -52,40 +61,67 @@
 
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="estadoAsiento">Estado de la Butaca:</label>
-                    <select id="estadoAsiento" [(ngModel)]="reporte.estado" class="form-control">
-                        <option value="limpio">🟢 Limpio / Disponible</option>
-                        <option value="mantenimiento">En Mantenimiento</option>
-                        <option value="sucio-asiento">Sucio (Asiento)</option>
-                        <option value="sucio-portavaso">Sucio (Portavasos)</option>
-                        <option value="sucio-descanzabrazo">Sucio (Descansabrazos)</option>
-                        <option value="sucio-tachon">Sucio (Tachón General)</option>
-                    </select>
+                    <label class="titulo-incidencias">Selecciona las incidencias encontradas:</label>
+                    <div class="contenedor-checkboxes">
+                        <label class="checkbox-item">
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.mantenimiento" [disabled]="bloquearGuardado"> En Mantenimiento
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_asiento" [disabled]="bloquearGuardado"> Sucio (Asiento)
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_portavaso" [disabled]="bloquearGuardado"> Sucio (Portavasos)
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_descanzabrazo" [disabled]="bloquearGuardado"> Sucio (Descansabrazos)
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_tachon" [disabled]="bloquearGuardado"> Sucio (Tachón General)
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="descripcion">Descripción de la incidencia:</label>
-                    <textarea id="descripcion" [(ngModel)]="reporte.descripcion" 
+                    <textarea id="descripcion" [(ngModel)]="reporte.descripcion" [disabled]="bloquearGuardado"
                         placeholder="Ej. Refresco tirado, respaldo flojo..." rows="3" class="form-control"></textarea>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" *ngIf="!bloquearGuardado">
                     <label class="btn-camara-label">
                         Tomar Evidencia Fotográfica
-                        <input type="file" accept="image/*" capture="camera" (change)="capturarFoto($event)" style="display: none;">
+                        <input type="file" accept="image/*" capture="camera" multiple (change)="capturarFoto($event)"
+                            style="display: none;">
                     </label>
-                    
-                    <div class="preview-foto-container" *ngIf="previewFoto">
-                        <img [src]="previewFoto" alt="Evidencia" class="img-preview">
-                        <button type="button" class="btn-quitar-foto" (click)="quitarFoto()">Eliminar foto</button>
-                    </div>
+                </div>
+
+                <div class="galeria-fotos-container" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px;">
+                    @for (preview of previewsFotos; track preview; let idx = $index) {
+                        <div class="preview-foto-container" style="position: relative; display: inline-block;">
+                            <img [src]="preview" alt="Evidencia" class="img-preview" style="width: 100px; height: 100px; object-fit: cover;">
+                            <button type="button" class="btn-quitar-foto" 
+                                    style="position: absolute; top: -5px; right: -5px; background: #ef4444; border-radius: 50%; padding: 2px 6px; font-size: 10px;" 
+                                    (click)="quitarFoto(idx)">×</button>
+                        </div>
+                    }
                 </div>
             </div>
 
             <div class="modal-footer">
+                <span *ngIf="bloquearGuardado" style="color: #ef4444; font-size: 11px; font-weight: bold; margin-right: auto; align-self: center; font-family: Arial, sans-serif;">
+                    REPORTE BLOQUEADO (SOLO LECTURA)
+                </span>
+
+                <button *ngIf="rolUsuario === 'supervisor'" class="btn-modal" 
+                    style="background-color: #10b981 !important; color: white !important; margin-right: auto;" 
+                    (click)="liberarButacaIndividual()">
+                    Marcar como Limpia
+                </button>
+                
                 <button class="btn-modal btn-salir" (click)="cerrarModal()">Salir</button>
-                <button class="btn-modal btn-guardar" (click)="guardarReporte()">Guardar Cambios</button>
+                <button *ngIf="!bloquearGuardado" class="btn-modal btn-guardar" (click)="guardarReporte()">Guardar Cambios</button>
             </div>
+
         </div>
     </div>
 </div>

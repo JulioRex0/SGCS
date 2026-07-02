@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { jwtDecode } from 'jwt-decode';
 
 @Component({
   selector: 'app-salas',
@@ -12,7 +13,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 })
 export class SalasComponent implements OnInit {
   salaId: string | null = null;
-
+  rolUsuario: string = '';
+  private apiUrl: string = '';
   infoSala: any = {};
   distribucion: any = {};
   asientosMapa: any = {};
@@ -20,22 +22,51 @@ export class SalasComponent implements OnInit {
 
   mostrarModal: boolean = false;
   asientoSeleccionado: { fila: string; numero: number } | null = null;
-  fotoCapturada: File | null = null;
-  previewFoto: string | null = null;
+  
+  fotosCapturadas: File[] = [];
+  previewsFotos: string[] = [];
+  bloquearGuardado: boolean = false;
 
   reporte: any = {
-    estado: 'limpio',
     descripcion: ''
   };
 
-  constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef) { }
+  opcionesReporte: any = {
+    mantenimiento: false,
+    sucio_asiento: false,
+    sucio_portavaso: false,
+    sucio_descanzabrazo: false,
+    sucio_tachon: false
+  };
+
+  constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef) {
+    this.configurarApiDinamica();
+  }
+
+  private configurarApiDinamica() {
+    const host = window.location.hostname;
+    if (host.includes('devtunnels.ms')) {
+      const hostBackend = host.replace('-4200', '-3000');
+      this.apiUrl = `https://${hostBackend}/api`;
+    } else {
+      this.apiUrl = `http://${host}:3000/api`;
+    }
+  }
 
   ngOnInit() {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decoded: any = jwtDecode(token);
+        this.rolUsuario = (decoded.rol || decoded.role || '').toLowerCase().trim();
+      }
+    } catch (error) {
+      console.error('Error decodificando el token en salas:', error);
+      this.rolUsuario = (localStorage.getItem('rol') || '').toLowerCase().trim();
+    }
+
     this.route.params.subscribe(params => {
       this.salaId = params['id'] || this.route.parent?.snapshot.params['id'] || this.route.snapshot.paramMap.get('id');
-
-      console.log('ID de sala detectado en el componente hijo:', this.salaId);
-
       if (this.salaId) {
         this.cargarDatosSala();
       }
@@ -45,15 +76,10 @@ export class SalasComponent implements OnInit {
   async cargarDatosSala() {
     try {
       const token = localStorage.getItem('token');
-      const currentHost = window.location.hostname;
-
-      // 1. Consultamos la estructura base de la sala (filas, distribución)
-      const respuestaSala = await fetch(`http://${currentHost}:3000/api/salas/${this.salaId}`, {
+      const respuestaSala = await fetch(`${this.apiUrl}/salas/${this.salaId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      // 🚀 2. Consultamos tus nuevos estados dinámicos desde /api/asientos/sala/:id
-      const respuestaAsientos = await fetch(`http://${currentHost}:3000/api/asientos/sala/${this.salaId}`, {
+      const respuestaAsientos = await fetch(`${this.apiUrl}/asientos/sala/${this.salaId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -61,18 +87,12 @@ export class SalasComponent implements OnInit {
         const datosSala = await respuestaSala.json();
         const datosAsientos = await respuestaAsientos.json();
 
-        // Asignamos la estructura estructural fija
         this.infoSala = datosSala.sala;
         this.distribucion = datosSala.sala.distribucion_filas;
         this.filas = Object.keys(this.distribucion).sort();
-
-        // 🚀 Reemplazamos el mapa con el objeto indexado 'asientosMapa' que genera tu nuevo endpoint
         this.asientosMapa = datosAsientos.asientos;
 
-        console.log('Datos estructurales y mapa de estados cargados con éxito.');
-        this.cdr.detectChanges(); // Forzamos el redibujado de las butacas con sus nuevos colores
-      } else {
-        console.error('Hubo un error al sincronizar los datos de la sala o sus asientos');
+        this.cdr.detectChanges();
       }
     } catch (error) {
       console.error('Error al obtener la configuración de la sala:', error);
@@ -81,28 +101,21 @@ export class SalasComponent implements OnInit {
 
   getNumerosAsientos(fila: string): number[] {
     const max = this.distribucion[fila] || 22;
-
     if (this.salaId === '4' || this.salaId === '8') {
       return Array.from({ length: max }, (_, i) => i + 1);
     }
-
     return Array.from({ length: max }, (_, i) => max - i);
   }
 
   obtenerDatosAsiento(fila: string, numero: number): { clases: string; texto: string } {
     const llave = `${fila}-${numero}`;
     const asientoStatus = this.asientosMapa[llave];
-
     let esDiscapacidad = false;
 
     if (fila === 'A') {
-      if (this.salaId === '1') {
-        esDiscapacidad = (numero === 10 || numero === 11);
-      } else if (this.salaId === '5' || this.salaId === '6') {
-        esDiscapacidad = (numero === 7 || numero === 8);
-      } else {
-        esDiscapacidad = (numero === 6 || numero === 7);
-      }
+      if (this.salaId === '1') esDiscapacidad = (numero === 10 || numero === 11);
+      else if (this.salaId === '5' || this.salaId === '6') esDiscapacidad = (numero === 7 || numero === 8);
+      else esDiscapacidad = (numero === 6 || numero === 7);
     }
 
     if (esDiscapacidad && (!asientoStatus || asientoStatus.estado === 'limpio')) {
@@ -110,6 +123,14 @@ export class SalasComponent implements OnInit {
     }
 
     if (asientoStatus && asientoStatus.estado !== 'limpio') {
+      const estadoStr = String(asientoStatus.estado).toLowerCase();
+      const tieneMantenimiento = estadoStr.includes('mantenimiento');
+      const tieneSuciedad = estadoStr.includes('sucio') || estadoStr.includes('mix');
+
+      if (tieneMantenimiento && tieneSuciedad) {
+        return { clases: 'asiento mixto-mantenimiento-sucio', texto: 'M/S' };
+      }
+
       let label = numero.toString();
       if (asientoStatus.estado === 'mantenimiento') label = 'M';
       if (asientoStatus.estado === 'sucio-asiento') label = 'S/A';
@@ -117,29 +138,56 @@ export class SalasComponent implements OnInit {
       if (asientoStatus.estado === 'sucio-descanzabrazo') label = 'S/D';
       if (asientoStatus.estado === 'sucio-tachon') label = 'S/T';
 
-      return {
-        clases: `asiento ${asientoStatus.estado}`,
-        texto: label
-      };
+      return { clases: `asiento ${asientoStatus.estado}`, texto: label };
     }
 
     return { clases: 'asiento limpio', texto: numero.toString() };
   }
 
   interactuarAsiento(fila: string, numero: number) {
-    console.log(`Abriendo menú de reporte para: Sala ${this.salaId} -> ${fila}-${numero}`);
-
     this.asientoSeleccionado = { fila, numero };
-    const llave = `${fila}-${numero}`;
-    const asientoStatus = this.asientosMapa[llave];
+    this.bloquearGuardado = false; 
 
-    this.reporte = {
-      estado: asientoStatus ? asientoStatus.estado : 'limpio',
-      descripcion: asientoStatus?.descripcion || ''
+    this.opcionesReporte = {
+      mantenimiento: false,
+      sucio_asiento: false,
+      sucio_portavaso: false,
+      sucio_descanzabrazo: false,
+      sucio_tachon: false
     };
+    this.reporte.descripcion = '';
+    this.fotosCapturadas = [];
+    this.previewsFotos = [];
 
-    this.previewFoto = asientoStatus?.foto_url || null;
-    this.fotoCapturada = null;
+    const llave = `${fila}-${numero}`;
+    const datosAsiento = this.asientosMapa && this.asientosMapa[llave];
+
+    if (datosAsiento) {
+      const lista: string[] = datosAsiento.incidencias || [];
+      
+      // Solo bloqueamos al operativo si la butaca contiene reportes de suciedad
+      const tieneSuciedadActiva = lista.some(i => i && i.trim().toLowerCase().startsWith('sucio'));
+
+      if (this.rolUsuario !== 'supervisor' && tieneSuciedadActiva) {
+        this.bloquearGuardado = true;
+      }
+
+      if (datosAsiento.descripcion) {
+        this.reporte.descripcion = datosAsiento.descripcion;
+      }
+
+      if (datosAsiento.url_fotos && datosAsiento.url_fotos.length > 0) {
+        const baseHost = this.apiUrl.replace('/api', '');
+        this.previewsFotos = datosAsiento.url_fotos.map((path: string) => `${baseHost}/${path}`);
+      }
+
+      if (lista.includes('mantenimiento')) this.opcionesReporte.mantenimiento = true;
+      if (lista.includes('sucio-asiento')) this.opcionesReporte.sucio_asiento = true;
+      if (lista.includes('sucio-portavaso')) this.opcionesReporte.sucio_portavaso = true;
+      if (lista.includes('sucio-descanzabrazo')) this.opcionesReporte.sucio_descanzabrazo = true;
+      if (lista.includes('sucio-tachon')) this.opcionesReporte.sucio_tachon = true;
+    }
+
     this.mostrarModal = true;
     this.cdr.detectChanges();
   }
@@ -147,28 +195,97 @@ export class SalasComponent implements OnInit {
   cerrarModal() {
     this.mostrarModal = false;
     this.asientoSeleccionado = null;
-    this.fotoCapturada = null;
-    this.previewFoto = null;
+    this.fotosCapturadas = [];
+    this.previewsFotos = [];
     this.cdr.detectChanges();
   }
 
   capturarFoto(event: any) {
-    const archivo = event.target.files[0];
-    if (archivo) {
-      this.fotoCapturada = archivo;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewFoto = reader.result as string;
-        this.cdr.detectChanges();
-      };
-      reader.readAsDataURL(archivo);
+    const archivos: FileList = event.target.files;
+    if (archivos && archivos.length > 0) {
+      Array.from(archivos).forEach(archivo => {
+        this.fotosCapturadas.push(archivo);
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.previewsFotos.push(reader.result as string);
+          this.cdr.detectChanges();
+        };
+        reader.readAsDataURL(archivo);
+      });
     }
   }
 
-  quitarFoto() {
-    this.fotoCapturada = null;
-    this.previewFoto = null;
+  async quitarFoto(index: number) {
+    this.fotosCapturadas.splice(index, 1);
+    this.previewsFotos.splice(index, 1);
+
+    if (this.asientoSeleccionado) {
+      try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('salaId', this.salaId || '');
+        formData.append('fila', this.asientoSeleccionado.fila);
+        formData.append('numero', this.asientoSeleccionado.numero.toString());
+        formData.append('descripcion', this.reporte.descripcion);
+        
+        const incidenciasSeleccionadas: string[] = [];
+        if (this.opcionesReporte.mantenimiento) incidenciasSeleccionadas.push('mantenimiento');
+        if (this.opcionesReporte.sucio_asiento) incidenciasSeleccionadas.push('sucio-asiento');
+        if (this.opcionesReporte.sucio_portavaso) incidenciasSeleccionadas.push('sucio-portavaso');
+        if (this.opcionesReporte.sucio_descanzabrazo) incidenciasSeleccionadas.push('sucio-descanzabrazo');
+        if (this.opcionesReporte.sucio_tachon) incidenciasSeleccionadas.push('sucio-tachon');
+        
+        formData.append('incidencias', JSON.stringify(incidenciasSeleccionadas));
+        formData.append('eliminarFotosExistentes', 'true');
+
+        this.fotosCapturadas.forEach(foto => formData.append('fotos', foto, foto.name));
+
+        const respuesta = await fetch(`${this.apiUrl}/asientos/reportar`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (respuesta.ok) {
+          await this.cargarDatosSala();
+          this.cdr.detectChanges();
+        }
+      } catch (error) {
+        console.error('Error al intentar remover la foto:', error);
+      }
+    }
+    this.cdr.detectChanges();
+  }
+
+  async liberarButacaIndividual() {
+    if (!this.asientoSeleccionado || this.rolUsuario !== 'supervisor') return;
+
+    const seguro = confirm(`¿Estás seguro de que deseas marcar como limpia la butaca ${this.asientoSeleccionado.fila}-${this.asientoSeleccionado.numero}? Esto eliminará todo reporte e imágenes asociadas.`);
+    if (!seguro) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const respuesta = await fetch(`${this.apiUrl}/asientos/liberar-butaca`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          salaId: this.salaId,
+          fila: this.asientoSeleccionado.fila,
+          numero: this.asientoSeleccionado.numero
+        })
+      });
+
+      if (respuesta.ok) {
+        this.cerrarModal();
+        await this.cargarDatosSala();
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error al conectar con la API de liberación:', error);
+    }
   }
 
   async guardarReporte() {
@@ -176,37 +293,68 @@ export class SalasComponent implements OnInit {
 
     try {
       const token = localStorage.getItem('token');
-      const currentHost = window.location.hostname;
-
       const formData = new FormData();
       formData.append('salaId', this.salaId || '');
       formData.append('fila', this.asientoSeleccionado.fila);
       formData.append('numero', this.asientoSeleccionado.numero.toString());
-      formData.append('estado', this.reporte.estado);
       formData.append('descripcion', this.reporte.descripcion);
 
-      const incidenciasSeleccionadas = [this.reporte.estado]; 
-      formData.append('incidencias', JSON.stringify(incidenciasSeleccionadas));
+      const incidenciasSeleccionadas: string[] = [];
+      if (this.opcionesReporte.mantenimiento) incidenciasSeleccionadas.push('mantenimiento');
+      if (this.opcionesReporte.sucio_asiento) incidenciasSeleccionadas.push('sucio-asiento');
+      if (this.opcionesReporte.sucio_portavaso) incidenciasSeleccionadas.push('sucio-portavaso');
+      if (this.opcionesReporte.sucio_descanzabrazo) incidenciasSeleccionadas.push('sucio-descanzabrazo');
+      if (this.opcionesReporte.sucio_tachon) incidenciasSeleccionadas.push('sucio-tachon');
 
-      if (this.fotoCapturada) {
-        formData.append('foto', this.fotoCapturada, this.fotoCapturada.name);
+      if (incidenciasSeleccionadas.length === 0) {
+        incidenciasSeleccionadas.push('limpio');
       }
 
-      const respuesta = await fetch(`http://${currentHost}:3000/api/asientos/reportar`, {
+      formData.append('incidencias', JSON.stringify(incidenciasSeleccionadas));
+
+      if (this.fotosCapturadas.length > 0) {
+        this.fotosCapturadas.forEach(foto => formData.append('fotos', foto, foto.name));
+      }
+
+      const respuesta = await fetch(`${this.apiUrl}/asientos/reportar`, {
         method: 'POST',
-        headers: {'Authorization': `Bearer ${token}`},
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
       if (respuesta.ok) {
-        console.log('Reporte de butaca guardado exitosamente.');
         this.cerrarModal();
-        this.cargarDatosSala();
-      } else {
-        console.error('El backend reportó un error al guardar la incidencia.');
+        await this.cargarDatosSala();
+        this.cdr.detectChanges();
       }
     } catch (error) {
-      console.error('Error de red al intentar guardar el reporte:', error);
+      console.error('Error al guardar el reporte:', error);
+    }
+  }
+
+  confirmarLiberacionSala() {
+    if (this.rolUsuario !== 'supervisor') return;
+    const seguro = confirm('¿Estás seguro de que deseas liberar toda la sala? Esto quitará todas las marcas de suciedad, pero mantendrá intactas las butacas en mantenimiento.');
+    if (seguro) {
+      this.ejecutarLiberacionSala();
+    }
+  }
+
+  async ejecutarLiberacionSala() {
+    try {
+      const token = localStorage.getItem('token');
+      const respuesta = await fetch(`${this.apiUrl}/asientos/sala/${this.salaId}/liberar`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (respuesta.ok) {
+        alert('Sala liberada con éxito. Los asientos sucios han sido limpiados y los archivos de imagen han sido purgados.');
+        await this.cargarDatosSala();
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error al conectar con el servidor:', error);
     }
   }
 }

@@ -10,7 +10,6 @@ const pool = new Pool({
     database: process.env.DB_DATABASE
 });
 
-// Probamos la conexión
 pool.query('SELECT NOW()', (err, res) => {
     if (err) {
         console.error('Error al conectar a PostgreSQL:', err.stack);
