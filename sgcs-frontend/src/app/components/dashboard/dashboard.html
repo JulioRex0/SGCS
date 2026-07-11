@@ -79,27 +79,38 @@
         <main class="dashboard-content">
             <div *ngIf="salaSeleccionada === null">
                 <div class="section-title-container">
-                    <h2>Datos generales de las salas del conjunto</h2>
+                    <h2>Datos generales del conjunto</h2>
                 </div>
 
                 <section class="analytics-section">
+                    <!-- Gráfica de Barras Dinámica -->
                     <div class="chart-box">
                         <h3>Salas con más incidencias</h3>
-                        <div class="mock-chart-bars">
-                            <div class="bar-trend-image"> (Gráfica de Incidencias)</div>
+                        <div style="display: block; width: 100%; height: 220px; padding: 10px 0;">
+                            <canvas baseChart 
+                                [data]="barChartData" 
+                                [options]="barChartOptions" 
+                                [type]="barChartType">
+                            </canvas>
                         </div>
                     </div>
 
+                    <!-- Gráfica de Pastel Dinámica -->
                     <div class="chart-box">
                         <h3>Activos en mantenimiento</h3>
-                        <div class="mock-chart-pie">
-                            <div class="pie-image"> (Gráfica de Pastel)</div>
+                        <div style="display: block; width: 100%; height: 220px; padding: 10px 0;">
+                            <canvas baseChart 
+                                [data]="pieChartData" 
+                                [options]="pieChartOptions" 
+                                [type]="pieChartType">
+                            </canvas>
                         </div>
                     </div>
                 </section>
 
+                <!-- Tabla de Historial Operativo Dinámica -->
                 <section class="table-section">
-                    <h3>Tabla con últimas actividades registradas en el sistema</h3>
+                    <h3>Ultimas actividades registradas</h3>
                     <div class="table-responsive">
                         <table class="neo-table">
                             <thead>
@@ -110,21 +121,19 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @for (item of ultimasActividades; track item) {
                                 <tr>
-                                    <td>Javier Nava Duran</td>
-                                    <td>27/05/2026, 18:45</td>
-                                    <td>Descanzabrazos: (Sala 1) J-11, H-1, A5</td>
+                                    <td>{{ item.usuario }}</td>
+                                    <td>{{ formatearFecha(item.fecha) }}</td>
+                                    <td>{{ item.detalle }}</td>
                                 </tr>
+                                } @empty {
                                 <tr>
-                                    <td>Uriel Moguel Rosas</td>
-                                    <td>27/05/2026, 18:10</td>
-                                    <td>Escalon: (Sala 1) Fila I, L, C</td>
+                                    <td colspan="3" style="text-align: center; color: #718096; padding: 20px;">
+                                        No se han registrado actividades recientes en el sistema.
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <td>Jorge Ortiz</td>
-                                    <td>26/05/2026, 10:05</td>
-                                    <td>Mantenimiento butaca: (Sala 8) K-12, F-4</td>
-                                </tr>
+                                }
                             </tbody>
                         </table>
                     </div>

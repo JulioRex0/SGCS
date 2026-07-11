@@ -83,7 +83,7 @@ router.post('/reportar', upload.array('fotos', 5), async (req, res) => {
             if (rolUsuario !== 'supervisor') {
                 // Consultamos si el reporte existente tiene algún tipo de suciedad
                 const detallesPrevios = await client.query(
-                    'SELECT tipo_incidencia FROM detalles_reporte WHERE id_reporte = $1', 
+                    'SELECT tipo_incidencia FROM detalles_reporte WHERE id_reporte = $1',
                     [idReporte]
                 );
                 const listaPrevias = detallesPrevios.rows.map(r => r.tipo_incidencia);
@@ -207,7 +207,7 @@ router.get('/sala/:salaId', async (req, res) => {
                 estado: estadoCalculado,
                 incidencias: lista,
                 descripcion: row.descripcion || '',
-                url_fotos: row.fotos || [] 
+                url_fotos: row.fotos || []
             };
         });
 
@@ -310,6 +310,73 @@ router.delete('/sala/:salaId/liberar', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor al liberar la sala' });
     } finally {
         client.release();
+    }
+});
+
+// ==========================================================================
+// ENDPOINTS DINÁMICOS PARA EL DASHBOARD DE POSTGRESQL
+// ==========================================================================
+
+// 1. Salas con más incidencias (Top salas ordenadas por volumen de reportes)
+router.get('/dashboard/salas-incidencias', async (req, res) => {
+    try {
+        const query = `
+      SELECT 
+        'Sala ' || id_sala AS sala, 
+        COUNT(DISTINCT id_reporte) AS incidencias
+      FROM reporte_sala
+      GROUP BY id_sala
+      ORDER BY incidencias DESC, id_sala ASC;
+    `;
+        const resultado = await pool.query(query);
+        res.status(200).json(resultado.rows);
+    } catch (error) {
+        console.error('Error en dashboard/salas-incidencias:', error);
+        res.status(500).json({ error: 'Error interno al consultar las incidencias de las salas' });
+    }
+});
+
+// 2. Activos en mantenimiento vs sucios (Conteo global consolidado para la gráfica de pastel)
+router.get('/dashboard/estatus-activos', async (req, res) => {
+    try {
+        const query = `
+      SELECT 
+        COUNT(CASE WHEN tipo_incidencia = 'mantenimiento' THEN 1 END) AS mantenimiento,
+        COUNT(CASE WHEN tipo_incidencia LIKE 'sucio%' THEN 1 END) AS sucio
+      FROM detalles_reporte;
+    `;
+        const resultado = await pool.query(query);
+
+        const conteo = resultado.rows[0];
+        res.status(200).json({
+            mantenimiento: parseInt(conteo.mantenimiento || 0, 10),
+            sucio: parseInt(conteo.sucio || 0, 10)
+        });
+    } catch (error) {
+        console.error('Error en dashboard/estatus-activos:', error);
+        res.status(500).json({ error: 'Error interno al consultar el estatus de activos' });
+    }
+});
+
+// 3. Últimas actividades registradas (Historial cruzando con los detalles y nombres de usuario)
+router.get('/dashboard/ultimas-actividades', async (req, res) => {
+    try {
+        const query = `
+      SELECT 
+        COALESCE(u.nombre, 'Usuario Desconocido') AS usuario,
+        rs.fecha_reporte AS fecha,
+        INITCAP(REPLACE(dr.tipo_incidencia, '-', ' ')) || ': (Sala ' || rs.id_sala || ') ' || rs.fila || '-' || rs.numero AS detalle
+      FROM reporte_sala rs
+      JOIN detalles_reporte dr ON rs.id_reporte = dr.id_reporte
+      LEFT JOIN usuarios u ON rs.id_usuario = u.id_usuario
+      ORDER BY rs.fecha_reporte DESC
+      LIMIT 5;
+    `;
+        const resultado = await pool.query(query);
+        res.status(200).json(resultado.rows);
+    } catch (error) {
+        console.error('Error en dashboard/ultimas-actividades:', error);
+        res.status(500).json({ error: 'Error interno al consultar las últimas actividades' });
     }
 });
 
