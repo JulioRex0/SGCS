@@ -9,6 +9,11 @@
     min-height: auto;
     padding: 10px 20px 20px 20px;
     font-family: 'Arial Black', Impact, sans-serif;
+    
+    /* CORRECCIÓN: Contexto aislado para que respete el menú lateral del layout global */
+    position: relative;
+    z-index: 1; 
+    overflow: hidden;
 }
 
 .salas-card {
@@ -234,6 +239,9 @@
     .salas-card {
         padding: 12px 15px 20px 15px;
         border-width: 3px;
+        /* CORRECCIÓN: Asegura que la tarjeta limite su tamaño al viewport del móvil */
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .sala-titulo {
@@ -248,11 +256,12 @@
     }
 
     .mapa-asientos-container {
-        width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
+        width: 100% !important;
+        max-width: 100vw !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
         padding: 10px 0 20px 0;
-        display: block;
+        display: block !important;
         text-align: center;
         scrollbar-width: thin;
         scrollbar-color: #0B2F61 #f0f4f8;
@@ -348,6 +357,7 @@
     border: 4px solid #0B2F61 !important;
     width: 100% !important;
     max-width: 480px !important;
+    max-height: 85vh !important;
     border-radius: 8px !important;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
     display: flex !important;
@@ -363,6 +373,7 @@
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
+    flex-shrink: 0 !important;
 }
 
 .modal-header h3 {
@@ -389,6 +400,8 @@
     flex-direction: column !important;
     gap: 15px !important;
     background: #ffffff !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
 }
 
 .form-group {
@@ -503,6 +516,7 @@
     justify-content: flex-end !important;
     gap: 12px !important;
     border-top: 1px solid #e2e8f0 !important;
+    flex-shrink: 0 !important;
 }
 
 .btn-modal {

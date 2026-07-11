@@ -11,6 +11,7 @@ import { jwtDecode } from 'jwt-decode';
   templateUrl: './salas.html',
   styleUrl: './salas.css'
 })
+
 export class SalasComponent implements OnInit {
   salaId: string | null = null;
   rolUsuario: string = '';
@@ -22,10 +23,11 @@ export class SalasComponent implements OnInit {
 
   mostrarModal: boolean = false;
   asientoSeleccionado: { fila: string; numero: number } | null = null;
-  
   fotosCapturadas: File[] = [];
   previewsFotos: string[] = [];
   bloquearGuardado: boolean = false;
+
+  fotoAmpliadaUrl: string | null = null;
 
   reporte: any = {
     descripcion: ''
@@ -69,8 +71,31 @@ export class SalasComponent implements OnInit {
       this.salaId = params['id'] || this.route.parent?.snapshot.params['id'] || this.route.snapshot.paramMap.get('id');
       if (this.salaId) {
         this.cargarDatosSala();
+        // Verifica y restaura el formulario si One UI recargó la pestaña al usar la cámara nativa
+        this.verificarYRecuperarModal();
       }
     });
+  }
+
+  verificarYRecuperarModal() {
+    const backup = localStorage.getItem('sgcs_modal_recuperacion');
+    if (backup) {
+      try {
+        const datos = JSON.parse(backup);
+        if (datos.salaId === this.salaId) {
+          this.asientoSeleccionado = datos.asientoSeleccionado;
+          this.reporte = datos.reporte;
+          this.opcionesReporte = datos.opcionesReporte;
+          this.mostrarModal = true;
+
+          console.log('Formulario recuperado tras cierre del navegador por falta de memoria.');
+          localStorage.removeItem('sgcs_modal_recuperacion');
+          this.cdr.detectChanges();
+        }
+      } catch (e) {
+        console.error('Error al restaurar el estado del modal:', e);
+      }
+    }
   }
 
   async cargarDatosSala() {
@@ -146,7 +171,7 @@ export class SalasComponent implements OnInit {
 
   interactuarAsiento(fila: string, numero: number) {
     this.asientoSeleccionado = { fila, numero };
-    this.bloquearGuardado = false; 
+    this.bloquearGuardado = false;
 
     this.opcionesReporte = {
       mantenimiento: false,
@@ -164,8 +189,6 @@ export class SalasComponent implements OnInit {
 
     if (datosAsiento) {
       const lista: string[] = datosAsiento.incidencias || [];
-      
-      // Solo bloqueamos al operativo si la butaca contiene reportes de suciedad
       const tieneSuciedadActiva = lista.some(i => i && i.trim().toLowerCase().startsWith('sucio'));
 
       if (this.rolUsuario !== 'supervisor' && tieneSuciedadActiva) {
@@ -197,10 +220,22 @@ export class SalasComponent implements OnInit {
     this.asientoSeleccionado = null;
     this.fotosCapturadas = [];
     this.previewsFotos = [];
+    localStorage.removeItem('sgcs_modal_recuperacion');
     this.cdr.detectChanges();
   }
 
   capturarFoto(event: any) {
+    // Guarda una copia de respaldo en el almacenamiento local antes de que el proceso del input file altere la pila
+    if (this.asientoSeleccionado) {
+      const estadoGuardado = {
+        salaId: this.salaId,
+        asientoSeleccionado: this.asientoSeleccionado,
+        reporte: this.reporte,
+        opcionesReporte: this.opcionesReporte
+      };
+      localStorage.setItem('sgcs_modal_recuperacion', JSON.stringify(estadoGuardado));
+    }
+
     const archivos: FileList = event.target.files;
     if (archivos && archivos.length > 0) {
       Array.from(archivos).forEach(archivo => {
@@ -208,6 +243,7 @@ export class SalasComponent implements OnInit {
         const reader = new FileReader();
         reader.onload = () => {
           this.previewsFotos.push(reader.result as string);
+          localStorage.removeItem('sgcs_modal_recuperacion');
           this.cdr.detectChanges();
         };
         reader.readAsDataURL(archivo);
@@ -216,44 +252,63 @@ export class SalasComponent implements OnInit {
   }
 
   async quitarFoto(index: number) {
-    this.fotosCapturadas.splice(index, 1);
-    this.previewsFotos.splice(index, 1);
+    if (!this.asientoSeleccionado) return;
 
-    if (this.asientoSeleccionado) {
-      try {
-        const token = localStorage.getItem('token');
-        const formData = new FormData();
-        formData.append('salaId', this.salaId || '');
-        formData.append('fila', this.asientoSeleccionado.fila);
-        formData.append('numero', this.asientoSeleccionado.numero.toString());
-        formData.append('descripcion', this.reporte.descripcion);
-        
-        const incidenciasSeleccionadas: string[] = [];
-        if (this.opcionesReporte.mantenimiento) incidenciasSeleccionadas.push('mantenimiento');
-        if (this.opcionesReporte.sucio_asiento) incidenciasSeleccionadas.push('sucio-asiento');
-        if (this.opcionesReporte.sucio_portavaso) incidenciasSeleccionadas.push('sucio-portavaso');
-        if (this.opcionesReporte.sucio_descanzabrazo) incidenciasSeleccionadas.push('sucio-descanzabrazo');
-        if (this.opcionesReporte.sucio_tachon) incidenciasSeleccionadas.push('sucio-tachon');
-        
-        formData.append('incidencias', JSON.stringify(incidenciasSeleccionadas));
-        formData.append('eliminarFotosExistentes', 'true');
+    const llave = `${this.asientoSeleccionado.fila}-${this.asientoSeleccionado.numero}`;
+    const datosAsiento = this.asientosMapa && this.asientosMapa[llave];
 
-        this.fotosCapturadas.forEach(foto => formData.append('fotos', foto, foto.name));
+    if (datosAsiento) {
+      const lista: string[] = datosAsiento.incidencias || [];
+      const tieneSuciedadActiva = lista.some(i => i && i.trim().toLowerCase().startsWith('sucio'));
 
-        const respuesta = await fetch(`${this.apiUrl}/asientos/reportar`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
-        });
-        
-        if (respuesta.ok) {
-          await this.cargarDatosSala();
-          this.cdr.detectChanges();
-        }
-      } catch (error) {
-        console.error('Error al intentar remover la foto:', error);
+      if (this.rolUsuario !== 'supervisor' && tieneSuciedadActiva) {
+        alert('Acción no permitida. Las evidencias de butacas con suciedad solo pueden ser modificadas por un supervisor.');
+        return;
       }
     }
+
+    const fotoUrl = this.previewsFotos[index];
+    this.previewsFotos.splice(index, 1);
+
+    if (fotoUrl.startsWith('data:image')) {
+      const nuevasFotosPrevias = this.previewsFotos.filter(p => p.startsWith('data:image'));
+      this.fotosCapturadas = this.fotosCapturadas.filter((_, idx) => idx < nuevasFotosPrevias.length);
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('salaId', this.salaId || '');
+      formData.append('fila', this.asientoSeleccionado.fila);
+      formData.append('numero', this.asientoSeleccionado.numero.toString());
+      formData.append('descripcion', this.reporte.descripcion);
+
+      const incidenciasSeleccionadas: string[] = [];
+      if (this.opcionesReporte.mantenimiento) incidenciasSeleccionadas.push('mantenimiento');
+      if (this.opcionesReporte.sucio_asiento) incidenciasSeleccionadas.push('sucio-asiento');
+      if (this.opcionesReporte.sucio_portavaso) incidenciasSeleccionadas.push('sucio-portavaso');
+      if (this.opcionesReporte.sucio_descanzabrazo) incidenciasSeleccionadas.push('sucio-descanzabrazo');
+      if (this.opcionesReporte.sucio_tachon) incidenciasSeleccionadas.push('sucio-tachon');
+
+      formData.append('incidencias', JSON.stringify(incidenciasSeleccionadas));
+      formData.append('eliminarFotosExistentes', 'true');
+
+      this.fotosCapturadas.forEach(foto => formData.append('fotos', foto, foto.name));
+
+      const respuesta = await fetch(`${this.apiUrl}/asientos/reportar`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      if (respuesta.ok) {
+        await this.cargarDatosSala();
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error al intentar remover la foto:', error);
+    }
+
     this.cdr.detectChanges();
   }
 
@@ -330,6 +385,16 @@ export class SalasComponent implements OnInit {
     } catch (error) {
       console.error('Error al guardar el reporte:', error);
     }
+  }
+
+  abrirZoomFoto(url: string) {
+    this.fotoAmpliadaUrl = url;
+    this.cdr.detectChanges();
+  }
+
+  cerrarZoomFoto() {
+    this.fotoAmpliadaUrl = null;
+    this.cdr.detectChanges();
   }
 
   confirmarLiberacionSala() {

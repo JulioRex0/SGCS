@@ -64,19 +64,24 @@
                     <label class="titulo-incidencias">Selecciona las incidencias encontradas:</label>
                     <div class="contenedor-checkboxes">
                         <label class="checkbox-item">
-                            <input type="checkbox" [(ngModel)]="opcionesReporte.mantenimiento" [disabled]="bloquearGuardado"> En Mantenimiento
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.mantenimiento"
+                                [disabled]="bloquearGuardado"> En Mantenimiento
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_asiento" [disabled]="bloquearGuardado"> Sucio (Asiento)
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_asiento"
+                                [disabled]="bloquearGuardado"> Sucio (Asiento)
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_portavaso" [disabled]="bloquearGuardado"> Sucio (Portavasos)
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_portavaso"
+                                [disabled]="bloquearGuardado"> Sucio (Portavasos)
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_descanzabrazo" [disabled]="bloquearGuardado"> Sucio (Descansabrazos)
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_descanzabrazo"
+                                [disabled]="bloquearGuardado"> Sucio (Descansabrazos)
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_tachon" [disabled]="bloquearGuardado"> Sucio (Tachón General)
+                            <input type="checkbox" [(ngModel)]="opcionesReporte.sucio_tachon"
+                                [disabled]="bloquearGuardado"> Sucio (Tachón General)
                         </label>
                     </div>
                 </div>
@@ -95,33 +100,56 @@
                     </label>
                 </div>
 
-                <div class="galeria-fotos-container" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px;">
+                <div class="form-group" *ngIf="!bloquearGuardado">
+                    <label class="btn-camara-label">
+                        Subir Evidencia de Galería
+                        <input type="file" accept="image/*" multiple (change)="capturarFoto($event)"
+                            style="display: none;">
+                    </label>
+                </div>
+
+                <div class="galeria-fotos-container"
+                    style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px;">
                     @for (preview of previewsFotos; track preview; let idx = $index) {
-                        <div class="preview-foto-container" style="position: relative; display: inline-block;">
-                            <img [src]="preview" alt="Evidencia" class="img-preview" style="width: 100px; height: 100px; object-fit: cover;">
-                            <button type="button" class="btn-quitar-foto" 
-                                    style="position: absolute; top: -5px; right: -5px; background: #ef4444; border-radius: 50%; padding: 2px 6px; font-size: 10px;" 
-                                    (click)="quitarFoto(idx)">×</button>
-                        </div>
+                    <div class="preview-foto-container" style="position: relative; display: inline-block;">
+                        <img [src]="preview" (click)="abrirZoomFoto(preview)" alt="Evidencia" class="img-preview"
+                            style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                        <button type="button" class="btn-quitar-foto"
+                            style="position: absolute; top: -5px; right: -5px; background: #ef4444; border-radius: 50%; padding: 2px 6px; font-size: 10px;"
+                            (click)="quitarFoto(idx)">×</button>
+                    </div>
                     }
                 </div>
             </div>
 
             <div class="modal-footer">
-                <span *ngIf="bloquearGuardado" style="color: #ef4444; font-size: 11px; font-weight: bold; margin-right: auto; align-self: center; font-family: Arial, sans-serif;">
+                <span *ngIf="bloquearGuardado"
+                    style="color: #ef4444; font-size: 11px; font-weight: bold; margin-right: auto; align-self: center; font-family: Arial, sans-serif;">
                     REPORTE BLOQUEADO (SOLO LECTURA)
                 </span>
 
-                <button *ngIf="rolUsuario === 'supervisor'" class="btn-modal" 
-                    style="background-color: #10b981 !important; color: white !important; margin-right: auto;" 
+                <button *ngIf="rolUsuario === 'supervisor'" class="btn-modal"
+                    style="background-color: #10b981 !important; color: white !important; margin-right: auto;"
                     (click)="liberarButacaIndividual()">
                     Marcar como Limpia
                 </button>
-                
+
                 <button class="btn-modal btn-salir" (click)="cerrarModal()">Salir</button>
-                <button *ngIf="!bloquearGuardado" class="btn-modal btn-guardar" (click)="guardarReporte()">Guardar Cambios</button>
+                <button *ngIf="!bloquearGuardado" class="btn-modal btn-guardar" (click)="guardarReporte()">Guardar
+                    Cambios</button>
             </div>
 
+        </div>
+    </div>
+
+    <!-- MODAL FLOTANTE NATIVO PARA ZOOM DE EVIDENCIAS -->
+    <div class="modal-zoom-overlay" *ngIf="fotoAmpliadaUrl" (click)="cerrarZoomFoto()"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.85); z-index: 999999; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <div style="position: relative; max-width: 90%; max-height: 90%;" (click)="$event.stopPropagation()">
+            <img [src]="fotoAmpliadaUrl"
+                style="width: auto; height: auto; max-width: 100%; max-height: 85vh; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.7);">
+            <button (click)="cerrarZoomFoto()"
+                style="position: absolute; top: -45px; right: 0; background: none; border: none; color: #ffffff; font-size: 36px; font-weight: 300; cursor: pointer; line-height: 1;">X</button>
         </div>
     </div>
 </div>
