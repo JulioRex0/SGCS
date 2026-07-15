@@ -66,13 +66,81 @@
                 </nav>
             </div>
 
-            <div class="sidebar-footer">
+            <!-- Estructura del Modal de Filtros -->
+            <div class="modal-backdrop" *ngIf="mostrarModalReporte"
+                style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+                <div class="modal-container"
+                    style="background: #ffffff; border: 3px solid #0B2F61; padding: 25px; width: 450px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: Arial, sans-serif;">
+                    <h3 style="color: #0B2F61; margin-top: 0; border-bottom: 2px solid #0B2F61; padding-bottom: 10px; text-transform: uppercase;">
+                        Configurar Reporte Operativo</h3>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                        <label style="font-weight: bold; color: #333;">Seleccionar Reporte:</label>
+                        <select [(ngModel)]="criterioReporte.tipo" style="padding: 8px; border: 1px solid #ccc;">
+                            <option value="registradas">Incidencias Registradas (Abiertas)</option>
+                            <option value="liberadas">Incidencias Liberadas (Limpias/Listas)</option>
+                            <option value="mantenimientos">Historial de Mantenimientos Técnicos</option>
+                        </select>
+
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">Desde (Fecha/Hora):</label>
+                                <input type="datetime-local" [(ngModel)]="criterioReporte.fechaInicio"
+                                    style="padding: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-weight: bold; color: #333; display: block; margin-bottom: 5px;">Hasta (Fecha/Hora):</label>
+                                <input type="datetime-local" [(ngModel)]="criterioReporte.fechaFin"
+                                    style="padding: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box;">
+                            </div>
+                        </div>
+
+                        <label style="font-weight: bold; color: #333;">Filtrar por Sala:</label>
+                        <select [(ngModel)]="criterioReporte.salaId" style="padding: 8px; border: 1px solid #ccc;">
+                            <option value="todas">Todas las Salas</option>
+                            @for (salaNum of [1,2,3,4,5,6,7,8]; track salaNum) {
+                                <option [value]="salaNum">Sala {{ salaNum }}</option>
+                            }
+                        </select>
+
+                        <label style="font-weight: bold; color: #333;">Filtrar por Empleado:</label>
+                        <select [(ngModel)]="criterioReporte.usuarioId" style="padding: 8px; border: 1px solid #ccc;">
+                            <option value="todos">Todos los Empleados</option>
+                            @for (u of listaUsuariosReporte; track u.id_usuario) {
+                                <option [value]="u.id_usuario">{{ u.nombre }}</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;">
+                        <button (click)="cerrarModalReporte()"
+                            style="padding: 10px 15px; background: #e2e8f0; border: none; cursor: pointer; font-weight: bold;">Cancelar</button>
+                        <button (click)="exportarReportePDF()"
+                            style="padding: 10px 15px; background: #0B2F61; color: #ffffff; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase;">Descargar PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer"
+                style="display: flex; flex-direction: column; gap: 8px; padding: 10px 15px; margin-top: auto;">
+
+                <button (click)="abrirModalReporte()"
+                    style="background-color: #0B2F61; color: #ffffff; padding: 12px; width: 100%; border: 3px solid #0B2F61; font-weight: bold; cursor: pointer; text-transform: uppercase; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 12px; display: block;">
+                    Generar Reportes PDF
+                </button>
+
+                <!-- Botón de Administrar Usuarios -->
                 <button *ngIf="usuarioActivo?.rol === 'supervisor'" routerLink="/usuarios"
                     class="btn-sidebar btn-usuarios"
-                    style="margin-bottom: 10px; padding: 12px; width: 100%; border: 3px solid #0B2F61; background: #ffffff; color: #0B2F61; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+                    style="padding: 12px; width: 100%; border: 3px solid #0B2F61; background: #ffffff; color: #0B2F61; font-weight: bold; cursor: pointer; text-transform: uppercase; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 12px;">
                     Administrar Usuarios
                 </button>
-                <button class="logout-style-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+
+                <!-- Botón de Cerrar Sesión -->
+                <button class="logout-style-btn" (click)="cerrarSesion()"
+                    style="padding: 12px; width: 100%; border: 1px solid #ccc; background: #ffffff; color: #333; font-weight: bold; cursor: pointer; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 12px;">
+                    Cerrar Sesión
+                </button>
             </div>
         </aside>
 
@@ -84,31 +152,42 @@
 
                 <section class="analytics-section">
                     <!-- Gráfica de Barras Dinámica -->
-                    <div class="chart-box">
-                        <h3>Salas con más incidencias</h3>
-                        <div style="display: block; width: 100%; height: 220px; padding: 10px 0;">
-                            <canvas baseChart 
-                                [data]="barChartData" 
-                                [options]="barChartOptions" 
-                                [type]="barChartType">
+                    <div class="chart-box" style="position: relative;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;">Salas con más incidencias</h3>
+                            <div
+                                style="display: flex; gap: 15px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; color: #0B2F61;">
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="checkbox" [(ngModel)]="filtroMantenimiento"
+                                        (change)="aplicarFiltrosGrafica()" style="accent-color: #f59e0b;">
+                                    Mantenimiento
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="checkbox" [(ngModel)]="filtroSucio" (change)="aplicarFiltrosGrafica()"
+                                        style="accent-color: #ef4444;">
+                                    Sucidad
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="position: relative; width: 100%; height: 200px;">
+                            <canvas baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType">
                             </canvas>
                         </div>
                     </div>
 
-                    <!-- Gráfica de Pastel Dinámica -->
+                    <!-- Gráfica de Pastel -->
                     <div class="chart-box">
                         <h3>Activos en mantenimiento</h3>
-                        <div style="display: block; width: 100%; height: 220px; padding: 10px 0;">
-                            <canvas baseChart 
-                                [data]="pieChartData" 
-                                [options]="pieChartOptions" 
-                                [type]="pieChartType">
+                        <div
+                            style="position: relative; width: 100%; height: 220px; display: flex; justify-content: center;">
+                            <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" [type]="pieChartType">
                             </canvas>
                         </div>
                     </div>
                 </section>
 
-                <!-- Tabla de Historial Operativo Dinámica -->
                 <section class="table-section">
                     <h3>Ultimas actividades registradas</h3>
                     <div class="table-responsive">

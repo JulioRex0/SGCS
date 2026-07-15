@@ -1,8 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Sala {
   numero: number;
@@ -15,34 +19,57 @@ interface Sala {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet, BaseChartDirective],
+  imports: [CommonModule, RouterModule, RouterOutlet, BaseChartDirective, FormsModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
 export class DashboardComponent implements OnInit {
+  @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
+
   salaSeleccionada: number | null = null;
   salas: Sala[] = [];
   menuColapsado: boolean = true;
   usuarioActivo: any = null;
-
+  public filtroMantenimiento: boolean = true;
+  public filtroSucio: boolean = true;
+  private datosSalasOriginales: any[] = [];
   private apiUrl: string = '';
   ultimasActividades: any[] = [];
 
-  // --- CONFIGURACIÓN GRÁFICA DE BARRAS (Salas con más incidencias) ---
+  // Variables para la gestión del modal de reportes con filtros por estado y sala
+  public mostrarModalReporte: boolean = false;
+  public listaUsuariosReporte: any[] = [];
+  public criterioReporte = {
+    tipo: 'registradas',
+    fechaInicio: '',
+    fechaFin: '',
+    salaId: 'todas',
+    usuarioId: 'todos'
+  };
+
+  // --- CONFIGURACIÓN GRÁFICA DE BARRAS ---
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
-    scales: { x: {}, y: { min: 0 } },
-    plugins: { legend: { display: false } }
+    maintainAspectRatio: false,
+    scales: { 
+      x: { stacked: true },
+      y: { min: 0, stacked: true } 
+    },
+    plugins: { 
+      legend: { display: true, position: 'top' } 
+    }
   };
+  
   public barChartType: ChartType = 'bar';
   public barChartData: ChartData<'bar'> = {
     labels: [],
-    datasets: [{ data: [], label: 'Incidencias', backgroundColor: '#0B2F61' }]
+    datasets: []
   };
 
-  // --- CONFIGURACIÓN GRÁFICA DE PASTEL (Activos en mantenimiento) ---
+  // --- CONFIGURACIÓN GRÁFICA DE PASTEL ---
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: true, position: 'top' }
     }
@@ -53,7 +80,7 @@ export class DashboardComponent implements OnInit {
     datasets: [{ data: [], backgroundColor: ['#f59e0b', '#ef4444'] }]
   };
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef) { 
+  constructor(private router: Router, private cdr: ChangeDetectorRef) {
     this.configurarApiDinamica();
   }
 
@@ -73,11 +100,11 @@ export class DashboardComponent implements OnInit {
 
     if (this.router.url === '/dashboard') {
       this.salaSeleccionada = null;
-      this.menuColapsado = true; 
+      this.menuColapsado = true;
     } else if (this.router.url.includes('/dashboard/salas/')) {
       const partes = this.router.url.split('/');
       this.salaSeleccionada = parseInt(partes[partes.length - 1], 10);
-      this.menuColapsado = true; 
+      this.menuColapsado = true;
     }
 
     if (this.salaSeleccionada === null) {
@@ -90,22 +117,24 @@ export class DashboardComponent implements OnInit {
     const headers = { 'Authorization': `Bearer ${token}` };
 
     try {
-      // 1. Cargar Gráfica de Barras
       const resBarras = await fetch(`${this.apiUrl}/asientos/dashboard/salas-incidencias`, { headers });
       if (resBarras.ok) {
-        const datos = await resBarras.json();
-        this.barChartData.labels = datos.map((d: any) => d.sala);
-        this.barChartData.datasets[0].data = datos.map((d: any) => d.incidencias);
+        this.datosSalasOriginales = await resBarras.json();
+        this.aplicarFiltrosGrafica();
       }
 
-      // 2. Cargar Gráfica de Pastel
       const resPastel = await fetch(`${this.apiUrl}/asientos/dashboard/estatus-activos`, { headers });
       if (resPastel.ok) {
         const datos = await resPastel.json();
-        this.pieChartData.datasets[0].data = [datos.mantenimiento, datos.sucio];
+        this.pieChartData = {
+          labels: ['En Mantenimiento', 'Sucios'],
+          datasets: [{
+            data: [datos.mantenimiento, datos.sucio],
+            backgroundColor: ['#f59e0b', '#ef4444']
+          }]
+        };
       }
 
-      // 3. Cargar Tabla de Actividad Histórica
       const resTabla = await fetch(`${this.apiUrl}/asientos/dashboard/ultimas-actividades`, { headers });
       if (resTabla.ok) {
         this.ultimasActividades = await resTabla.json();
@@ -117,14 +146,178 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  aplicarFiltrosGrafica() {
+    const labels = this.datosSalasOriginales.map((d: any) => d.sala);
+    const datasets: any[] = [];
+
+    if (this.filtroMantenimiento) {
+      datasets.push({
+        data: this.datosSalasOriginales.map((d: any) => parseInt(d.mantenimiento || 0, 10)),
+        label: 'Mantenimiento',
+        backgroundColor: '#f59e0b',
+        borderColor: '#d97706',
+        borderWidth: 1
+      });
+    }
+
+    if (this.filtroSucio) {
+      datasets.push({
+        data: this.datosSalasOriginales.map((d: any) => parseInt(d.sucios || 0, 10)),
+        label: 'Suciedad',
+        backgroundColor: '#ef4444',
+        borderColor: '#dc2626',
+        borderWidth: 1
+      });
+    }
+
+    if (datasets.length === 0) {
+      this.barChartData = {
+        labels: labels,
+        datasets: [{ data: labels.map(() => 0), label: 'Sin incidencias', backgroundColor: '#e2e8f0' }]
+      };
+    } else {
+      this.barChartData = {
+        labels: labels,
+        datasets: datasets
+      };
+    }
+
+    this.cdr.detectChanges();
+    this.chart?.update();
+  }
+
+  abrirModalReporte() {
+    this.mostrarModalReporte = true;
+    this.obtenerUsuariosParaFiltro();
+    
+    const hoy = new Date();
+    const haceUnaSemana = new Date();
+    haceUnaSemana.setDate(hoy.getDate() - 7);
+    
+    this.criterioReporte.fechaInicio = haceUnaSemana.toISOString().slice(0, 16);
+    this.criterioReporte.fechaFin = hoy.toISOString().slice(0, 16);
+  }
+
+  cerrarModalReporte() {
+    this.mostrarModalReporte = false;
+  }
+
+  async obtenerUsuariosParaFiltro() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${this.apiUrl}/usuarios`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) this.listaUsuariosReporte = await res.json();
+    } catch (e) {
+      console.error('Error cargando catálogo de usuarios:', e);
+    }
+  }
+
+  // Carga y procesa el recurso local desde assets a base64
+  obtenerBase64DesdeUrl(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = url;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          reject(new Error('No se pudo obtener el contexto del canvas'));
+        }
+      };
+      img.onerror = (error) => reject(error);
+    });
+  }
+
+async exportarReportePDF() {
+    const token = localStorage.getItem('token');
+    try {
+      const queryParams = new URLSearchParams(this.criterioReporte).toString();
+      const res = await fetch(`${this.apiUrl}/asientos/dashboard/exportar-reporte?${queryParams}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Error al obtener datos');
+      const datosReporte = await res.json();
+
+      const doc = new jsPDF('p', 'mm', 'letter');
+      
+      // Encabezado corporativo institucional
+      doc.setFillColor(11, 47, 97);
+      doc.rect(0, 0, 216, 25, 'F');
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text('SGCS - SISTEMA DE GESTIÓN DE CONTROL DE SALAS', 15, 16);
+      
+      // --- INCORPORACIÓN DEL LOGOTIPO DIRECTO DE ASSETS ---
+      try {
+        const img = new Image();
+        img.src = 'assets/logo-cinepolis.png';
+        
+        // Esperamos a que la imagen cargue completamente antes de inyectarla en el PDF
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        // X=175mm, Y=4mm, Ancho=26mm, Alto=17mm
+        doc.addImage(img, 'PNG', 175, 4, 26, 17);
+      } catch (imgError) {
+        console.warn('No se pudo incrustar el logotipo físico en el PDF:', imgError);
+      }
+
+      doc.setFontSize(11);
+      doc.setTextColor(51, 51, 51);
+      
+      let tituloReporte = 'Incidencias Registradas (Abiertas)';
+      if (this.criterioReporte.tipo === 'liberadas') tituloReporte = 'Incidencias Liberadas (Limpias/Listas)';
+      if (this.criterioReporte.tipo === 'mantenimientos') tituloReporte = 'Historial de Mantenimientos Técnicos';
+
+      doc.text(`Reporte: ${tituloReporte}`, 15, 35);
+      doc.text(`Periodo: ${this.criterioReporte.fechaInicio.replace('T',' ')} a ${this.criterioReporte.fechaFin.replace('T',' ')}`, 15, 41);
+      
+      const columnas = ['Entidad / Personal', 'Sala', 'Resumen / Actividades Realizadas', 'Fecha y Hora'];
+      const filas = datosReporte.map((item: any) => [
+        item.usuario || 'N/A',
+        item.id_sala === 'Todas' ? 'Todas' : `Sala ${item.id_sala}`,
+        item.detalle || 'Sin registro',
+        item.fecha ? this.formatearFecha(item.fecha) : 'Sin registros'
+      ]);
+
+      autoTable(doc, {
+        startY: 48,
+        head: [columnas],
+        body: filas,
+        theme: 'striped',
+        headStyles: { fillColor: [11, 47, 97], fontStyle: 'bold' },
+        styles: { font: 'Helvetica', fontSize: 9 }
+      });
+
+      doc.save(`SGCS_Reporte_${this.criterioReporte.tipo}_${Date.now()}.pdf`);
+      this.cerrarModalReporte();
+    } catch (error) {
+      alert('Error al generar el PDF corporativo.');
+      console.error(error);
+    }
+  }
+
   formatearFecha(fechaStr: string): string {
     const fecha = new Date(fechaStr);
-    return fecha.toLocaleString('es-MX', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return fecha.toLocaleString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
@@ -134,16 +327,14 @@ export class DashboardComponent implements OnInit {
 
   seleccionarSala(numero: number) {
     this.salaSeleccionada = numero;
-    this.menuColapsado = true; 
-    console.log(`Cambiando a la vista detallada de la Sala ${numero} y colapsando menú`);
+    this.menuColapsado = true;
   }
 
   irADatosGenerales() {
-    this.salaSeleccionada = null; 
-    this.menuColapsado = false; 
-    this.router.navigate(['/dashboard']); 
-    this.cargarDatosDashboard(); 
-    console.log('Regresando a los datos generales y expandiendo menú');
+    this.salaSeleccionada = null;
+    this.menuColapsado = false;
+    this.router.navigate(['/dashboard']);
+    this.cargarDatosDashboard();
   }
 
   verDatosUsuario() {
@@ -151,7 +342,6 @@ export class DashboardComponent implements OnInit {
   }
 
   cerrarSesion() {
-    console.log("Cerrando sesión, destruyendo token y redirigiendo.");
     localStorage.clear();
     this.router.navigate(['/login']);
   }

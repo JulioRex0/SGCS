@@ -322,11 +322,14 @@ router.get('/dashboard/salas-incidencias', async (req, res) => {
     try {
         const query = `
       SELECT 
-        'Sala ' || id_sala AS sala, 
-        COUNT(DISTINCT id_reporte) AS incidencias
-      FROM reporte_sala
-      GROUP BY id_sala
-      ORDER BY incidencias DESC, id_sala ASC;
+        'Sala ' || rs.id_sala AS sala, 
+        COUNT(DISTINCT rs.id_reporte) AS incidencias,
+        COUNT(DISTINCT CASE WHEN dr.tipo_incidencia = 'mantenimiento' THEN dr.id_reporte END) AS mantenimiento,
+        COUNT(DISTINCT CASE WHEN dr.tipo_incidencia LIKE 'sucio%' THEN dr.id_reporte END) AS sucios
+      FROM reporte_sala rs
+      LEFT JOIN detalles_reporte dr ON rs.id_reporte = dr.id_reporte
+      GROUP BY rs.id_sala
+      ORDER BY incidencias DESC, rs.id_sala ASC;
     `;
         const resultado = await pool.query(query);
         res.status(200).json(resultado.rows);
@@ -378,6 +381,65 @@ router.get('/dashboard/ultimas-actividades', async (req, res) => {
         console.error('Error en dashboard/ultimas-actividades:', error);
         res.status(500).json({ error: 'Error interno al consultar las últimas actividades' });
     }
+});
+
+// ==========================================================================
+// ENDPOINT DE REPORTES GERENCIALES OPERATIVOS CORREGIDO (detalles_reporte)
+// ==========================================================================
+router.get('/dashboard/exportar-reporte', async (req, res) => {
+  try {
+    const { tipo, fechaInicio, fechaFin, salaId, usuarioId } = req.query;
+    let query = '';
+    let parametros = [fechaInicio, fechaFin];
+    let placeholderIndex = 3;
+
+    // Consulta adaptada a tu esquema real: reporte_sala y detalles_reporte
+    query = `
+      SELECT 
+        u.nombre AS usuario,
+        rs.id_sala,
+        INITCAP(REPLACE(dr.tipo_incidencia, '-', ' ')) || ' - Fila ' || rs.fila || ' Asiento ' || rs.numero AS detalle,
+        rs.fecha_reporte AS fecha
+      FROM reporte_sala rs
+      INNER JOIN detalles_reporte dr ON rs.id_reporte = dr.id_reporte
+      INNER JOIN usuarios u ON rs.id_usuario = u.id_usuario
+      WHERE rs.fecha_reporte BETWEEN $1 AND $2
+    `;
+
+    // Filtros lógicos por Tipo de reporte basados en tus datos reales
+    if (tipo === 'registradas') {
+      // Muestra incidencias activas detectadas en sala
+      query += ` AND (dr.tipo_incidencia = 'mantenimiento' OR dr.tipo_incidencia LIKE 'sucio%')`;
+    } else if (tipo === 'liberadas') {
+      // Si manejas un estado explícito de liberado lo pones aquí, por ahora filtramos lo que no esté sucio/dañado si aplica
+      query += ` AND dr.tipo_incidencia NOT LIKE 'sucio%' AND dr.tipo_incidencia != 'mantenimiento'`;
+    } else if (tipo === 'mantenimientos') {
+      // Exclusivo para desperfectos técnicos de mantenimiento
+      query += ` AND dr.tipo_incidencia = 'mantenimiento'`;
+    }
+
+    // Filtro dinámico por Sala
+    if (salaId !== 'todas') {
+      query += ` AND rs.id_sala = $${placeholderIndex}`;
+      parametros.push(salaId);
+      placeholderIndex++;
+    }
+
+    // Filtro dinámico por Empleado/Usuario
+    if (usuarioId !== 'todos') {
+      query += ` AND rs.id_usuario = $${placeholderIndex}`;
+      parametros.push(usuarioId);
+      placeholderIndex++;
+    }
+
+    query += ` ORDER BY rs.fecha_reporte DESC;`;
+
+    const resultado = await pool.query(query, parametros);
+    res.status(200).json(resultado.rows);
+  } catch (error) {
+    console.error('Error detallado en el servidor al generar reporte:', error);
+    res.status(500).json({ error: 'Fallo interno en las tablas de la base de datos.' });
+  }
 });
 
 module.exports = router;
