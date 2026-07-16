@@ -61,7 +61,6 @@
     border: 3px solid #0B2F61;
     padding: 20px;
     box-sizing: border-box;
-    /* Esto obliga al canvas a respetar el espacio asignado */
     position: relative; 
     height: 320px; 
 }

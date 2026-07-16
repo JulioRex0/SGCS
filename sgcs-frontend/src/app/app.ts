@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router'; 
-import { LoginComponent } from './components/login/login'; 
+import { Component, OnInit } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router'; 
 
 @Component({
   selector: 'app-root',
@@ -9,6 +8,19 @@ import { LoginComponent } from './components/login/login';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'sgcs-frontend';
+
+  constructor(private router: Router) {}
+
+  ngOnInit(): void {
+    window.addEventListener('pageshow', (event) => {
+      const token = localStorage.getItem('token');
+      
+      if (!token && this.router.url !== '/login') {
+        localStorage.clear();
+        this.router.navigate(['/login']);
+      }
+    });
+  }
 }

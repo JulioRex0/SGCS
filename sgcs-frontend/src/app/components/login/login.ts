@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, CredencialesLogin, RespuestaLogin } from '../../services/auth';
@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   credenciales: CredencialesLogin = {
     num_empleado: '',
     password: ''
@@ -21,6 +21,10 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router
   ) { }
+
+  ngOnInit() {
+    localStorage.clear();
+  }
 
   onLogin() {
     if (!this.credenciales.num_empleado || !this.credenciales.password) {
@@ -41,7 +45,6 @@ export class LoginComponent {
       },
       error: (err: HttpErrorResponse) => {
         console.error('Error en el inicio de sesión:', err);
-        
         
         const mensajeError = err.error?.error || 'Error al conectar con el servidor (Verifica tu red)';
         alert(mensajeError);

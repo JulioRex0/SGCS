@@ -13,7 +13,6 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class RegistroComponent {
   
-  // Modelo para capturar los datos del formulario
   nuevoUsuario = {
     num_empleado: '',
     nombre: '',

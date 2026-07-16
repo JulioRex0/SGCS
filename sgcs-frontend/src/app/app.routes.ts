@@ -8,6 +8,7 @@ import { UsuariosComponent } from './components/usuarios/usuarios';
 import { SalasComponent } from './components/salas/salas'; 
 
 export const routes: Routes = [
+    { path: 'salas/:id', component: SalasComponent, canActivate: [authGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'registro', component: RegistroComponent },
     { path: 'perfil', component: PerfilComponent, canActivate: [authGuard] },
@@ -18,7 +19,7 @@ export const routes: Routes = [
         component: DashboardComponent, 
         canActivate: [authGuard],
         children: [
-            { path: 'salas/:id', component: SalasComponent }
+            { path: 'salas/:id', component: SalasComponent, canActivate: [authGuard] }
         ]
     },
     

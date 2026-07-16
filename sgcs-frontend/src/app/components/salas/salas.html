@@ -142,7 +142,6 @@
         </div>
     </div>
 
-    <!-- MODAL FLOTANTE NATIVO PARA ZOOM DE EVIDENCIAS -->
     <div class="modal-zoom-overlay" *ngIf="fotoAmpliadaUrl" (click)="cerrarZoomFoto()"
         style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.85); z-index: 999999; display: flex; align-items: center; justify-content: center; cursor: pointer;">
         <div style="position: relative; max-width: 90%; max-height: 90%;" (click)="$event.stopPropagation()">

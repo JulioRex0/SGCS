@@ -214,7 +214,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Carga y procesa el recurso local desde assets a base64
   obtenerBase64DesdeUrl(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -249,7 +248,6 @@ async exportarReportePDF() {
 
       const doc = new jsPDF('p', 'mm', 'letter');
       
-      // Encabezado corporativo institucional
       doc.setFillColor(11, 47, 97);
       doc.rect(0, 0, 216, 25, 'F');
       
@@ -258,18 +256,15 @@ async exportarReportePDF() {
       doc.setTextColor(255, 255, 255);
       doc.text('SGCS - SISTEMA DE GESTIÓN DE CONTROL DE SALAS', 15, 16);
       
-      // --- INCORPORACIÓN DEL LOGOTIPO DIRECTO DE ASSETS ---
       try {
         const img = new Image();
         img.src = 'assets/logo-cinepolis.png';
         
-        // Esperamos a que la imagen cargue completamente antes de inyectarla en el PDF
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
         });
 
-        // X=175mm, Y=4mm, Ancho=26mm, Alto=17mm
         doc.addImage(img, 'PNG', 175, 4, 26, 17);
       } catch (imgError) {
         console.warn('No se pudo incrustar el logotipo físico en el PDF:', imgError);

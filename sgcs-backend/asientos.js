@@ -29,7 +29,10 @@ router.post('/reportar', upload.array('fotos', 5), async (req, res) => {
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_firma_secreta');
-            idUsuario = decoded.id || decoded.id_usuario;
+
+            console.log('Contenido del token decodificado:', decoded);
+
+            idUsuario = decoded.id_usuario || decoded.id || decoded.sub;
         }
     } catch (e) {
         console.error('No se pudo extraer el usuario del token:', e.message);
@@ -81,7 +84,6 @@ router.post('/reportar', upload.array('fotos', 5), async (req, res) => {
             const rolUsuario = usuarioRes.rows[0]?.rol?.toLowerCase().trim();
 
             if (rolUsuario !== 'supervisor') {
-                // Consultamos si el reporte existente tiene algún tipo de suciedad
                 const detallesPrevios = await client.query(
                     'SELECT tipo_incidencia FROM detalles_reporte WHERE id_reporte = $1',
                     [idReporte]
@@ -89,7 +91,6 @@ router.post('/reportar', upload.array('fotos', 5), async (req, res) => {
                 const listaPrevias = detallesPrevios.rows.map(r => r.tipo_incidencia);
                 const teniaSuciedad = listaPrevias.some(i => i && i.startsWith('sucio'));
 
-                // Si tenía suciedad asignada previamente, se le bloquea al operativo.
                 if (teniaSuciedad) {
                     await client.query('ROLLBACK');
                     return res.status(403).json({ error: 'Acción no permitida. Las butacas con suciedad solo pueden ser modificadas por un supervisor.' });
@@ -122,7 +123,6 @@ router.post('/reportar', upload.array('fotos', 5), async (req, res) => {
             await client.query(queryDetalle, [idReporte, incidencia, descripcion || '']);
         }
 
-        // PROCESAMIENTO MULTI-FOTO EN DISCO Y BASE DE DATOS
         if (eliminarFotosExistentes === 'true') {
             const resFotos = await client.query('SELECT url_foto FROM evidencias WHERE id_reporte = $1', [idReporte]);
             resFotos.rows.forEach(row => {
@@ -314,7 +314,7 @@ router.delete('/sala/:salaId/liberar', async (req, res) => {
 });
 
 // ==========================================================================
-// ENDPOINTS DINÁMICOS PARA EL DASHBOARD DE POSTGRESQL
+// ENDPOINTS DINÁMICOS PARA EL DASHBOARD DE POSTGRESQL (FIJOS PARA GRÁFICAS)
 // ==========================================================================
 
 // 1. Salas con más incidencias (Top salas ordenadas por volumen de reportes)
@@ -339,7 +339,7 @@ router.get('/dashboard/salas-incidencias', async (req, res) => {
     }
 });
 
-// 2. Activos en mantenimiento vs sucios (Conteo global consolidado para la gráfica de pastel)
+// 2. Activos en mantenimiento vs sucios (Para la gráfica de pastel)
 router.get('/dashboard/estatus-activos', async (req, res) => {
     try {
         const query = `
@@ -349,7 +349,6 @@ router.get('/dashboard/estatus-activos', async (req, res) => {
       FROM detalles_reporte;
     `;
         const resultado = await pool.query(query);
-
         const conteo = resultado.rows[0];
         res.status(200).json({
             mantenimiento: parseInt(conteo.mantenimiento || 0, 10),
@@ -361,12 +360,12 @@ router.get('/dashboard/estatus-activos', async (req, res) => {
     }
 });
 
-// 3. Últimas actividades registradas (Historial cruzando con los detalles y nombres de usuario)
+// 3. Últimas actividades registradas
 router.get('/dashboard/ultimas-actividades', async (req, res) => {
     try {
         const query = `
       SELECT 
-        COALESCE(u.nombre, 'Usuario Desconocido') AS usuario,
+        COALESCE(u.nombre, 'Usuario Operativo') AS usuario,
         rs.fecha_reporte AS fecha,
         INITCAP(REPLACE(dr.tipo_incidencia, '-', ' ')) || ': (Sala ' || rs.id_sala || ') ' || rs.fila || '-' || rs.numero AS detalle
       FROM reporte_sala rs
@@ -384,62 +383,55 @@ router.get('/dashboard/ultimas-actividades', async (req, res) => {
 });
 
 // ==========================================================================
-// ENDPOINT DE REPORTES GERENCIALES OPERATIVOS CORREGIDO (detalles_reporte)
+// ENDPOINT DE REPORTES GERENCIALES (EXPORTAR PDF)
 // ==========================================================================
 router.get('/dashboard/exportar-reporte', async (req, res) => {
-  try {
-    const { tipo, fechaInicio, fechaFin, salaId, usuarioId } = req.query;
-    let query = '';
-    let parametros = [fechaInicio, fechaFin];
-    let placeholderIndex = 3;
+    try {
+        const { tipo, fechaInicio, fechaFin, salaId, usuarioId } = req.query;
+        let query = '';
+        let parametros = [fechaInicio, fechaFin];
+        let placeholderIndex = 3;
 
-    // Consulta adaptada a tu esquema real: reporte_sala y detalles_reporte
-    query = `
+        query = `
       SELECT 
-        u.nombre AS usuario,
+        COALESCE(u.nombre, 'Usuario Operativo') AS usuario,
         rs.id_sala,
         INITCAP(REPLACE(dr.tipo_incidencia, '-', ' ')) || ' - Fila ' || rs.fila || ' Asiento ' || rs.numero AS detalle,
         rs.fecha_reporte AS fecha
       FROM reporte_sala rs
       INNER JOIN detalles_reporte dr ON rs.id_reporte = dr.id_reporte
-      INNER JOIN usuarios u ON rs.id_usuario = u.id_usuario
+      LEFT JOIN usuarios u ON rs.id_usuario = u.id_usuario
       WHERE rs.fecha_reporte BETWEEN $1 AND $2
     `;
 
-    // Filtros lógicos por Tipo de reporte basados en tus datos reales
-    if (tipo === 'registradas') {
-      // Muestra incidencias activas detectadas en sala
-      query += ` AND (dr.tipo_incidencia = 'mantenimiento' OR dr.tipo_incidencia LIKE 'sucio%')`;
-    } else if (tipo === 'liberadas') {
-      // Si manejas un estado explícito de liberado lo pones aquí, por ahora filtramos lo que no esté sucio/dañado si aplica
-      query += ` AND dr.tipo_incidencia NOT LIKE 'sucio%' AND dr.tipo_incidencia != 'mantenimiento'`;
-    } else if (tipo === 'mantenimientos') {
-      // Exclusivo para desperfectos técnicos de mantenimiento
-      query += ` AND dr.tipo_incidencia = 'mantenimiento'`;
+        if (tipo === 'registradas') {
+            query += ` AND (dr.tipo_incidencia = 'mantenimiento' OR dr.tipo_incidencia LIKE 'sucio%')`;
+        } else if (tipo === 'liberadas') {
+            query += ` AND dr.tipo_incidencia NOT LIKE 'sucio%' AND dr.tipo_incidencia != 'mantenimiento'`;
+        } else if (tipo === 'mantenimientos') {
+            query += ` AND dr.tipo_incidencia = 'mantenimiento'`;
+        }
+
+        if (salaId !== 'todas') {
+            query += ` AND rs.id_sala = $${placeholderIndex}`;
+            parametros.push(salaId);
+            placeholderIndex++;
+        }
+
+        if (usuarioId !== 'todos') {
+            query += ` AND rs.id_usuario = $${placeholderIndex}`;
+            parametros.push(usuarioId);
+            placeholderIndex++;
+        }
+
+        query += ` ORDER BY rs.fecha_reporte DESC;`;
+
+        const resultado = await pool.query(query, parametros);
+        res.status(200).json(resultado.rows);
+    } catch (error) {
+        console.error('Error al generar reporte:', error);
+        res.status(500).json({ error: 'Fallo interno en las tablas de la base de datos.' });
     }
-
-    // Filtro dinámico por Sala
-    if (salaId !== 'todas') {
-      query += ` AND rs.id_sala = $${placeholderIndex}`;
-      parametros.push(salaId);
-      placeholderIndex++;
-    }
-
-    // Filtro dinámico por Empleado/Usuario
-    if (usuarioId !== 'todos') {
-      query += ` AND rs.id_usuario = $${placeholderIndex}`;
-      parametros.push(usuarioId);
-      placeholderIndex++;
-    }
-
-    query += ` ORDER BY rs.fecha_reporte DESC;`;
-
-    const resultado = await pool.query(query, parametros);
-    res.status(200).json(resultado.rows);
-  } catch (error) {
-    console.error('Error detallado en el servidor al generar reporte:', error);
-    res.status(500).json({ error: 'Fallo interno en las tablas de la base de datos.' });
-  }
 });
 
 module.exports = router;

@@ -71,7 +71,6 @@ export class SalasComponent implements OnInit {
       this.salaId = params['id'] || this.route.parent?.snapshot.params['id'] || this.route.snapshot.paramMap.get('id');
       if (this.salaId) {
         this.cargarDatosSala();
-        // Verifica y restaura el formulario si One UI recargó la pestaña al usar la cámara nativa
         this.verificarYRecuperarModal();
       }
     });
@@ -224,8 +223,51 @@ export class SalasComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  capturarFoto(event: any) {
-    // Guarda una copia de respaldo en el almacenamiento local antes de que el proceso del input file altere la pila
+  
+  private comprimirImagen(archivo: File, calidad: number = 0.7): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(archivo);
+      reader.onload = (event: any) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1280;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('No se pudo obtener el contexto del canvas'));
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const archivoComprimido = new File([blob], archivo.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(archivoComprimido);
+            } else {
+              reject(new Error('Error al generar blob de imagen'));
+            }
+          }, 'image/jpeg', calidad);
+        };
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  async capturarFoto(event: any) {
     if (this.asientoSeleccionado) {
       const estadoGuardado = {
         salaId: this.salaId,
@@ -238,16 +280,33 @@ export class SalasComponent implements OnInit {
 
     const archivos: FileList = event.target.files;
     if (archivos && archivos.length > 0) {
-      Array.from(archivos).forEach(archivo => {
-        this.fotosCapturadas.push(archivo);
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.previewsFotos.push(reader.result as string);
-          localStorage.removeItem('sgcs_modal_recuperacion');
-          this.cdr.detectChanges();
-        };
-        reader.readAsDataURL(archivo);
-      });
+      const listaArchivos = Array.from(archivos);
+      
+      for (const archivo of listaArchivos) {
+        try {
+          const fotoComprimida = await this.comprimirImagen(archivo, 0.7);
+          this.fotosCapturadas.push(fotoComprimida);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.previewsFotos.push(reader.result as string);
+            localStorage.removeItem('sgcs_modal_recuperacion');
+            this.cdr.detectChanges();
+          };
+          reader.readAsDataURL(fotoComprimida);
+        } catch (error) {
+          console.error('Error al comprimir foto individual, usando original:', error);
+          this.fotosCapturadas.push(archivo);
+          
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.previewsFotos.push(reader.result as string);
+            localStorage.removeItem('sgcs_modal_recuperacion');
+            this.cdr.detectChanges();
+          };
+          reader.readAsDataURL(archivo);
+        }
+      }
     }
   }
 
